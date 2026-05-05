@@ -27,14 +27,14 @@ const config: Config = {
           950: "#070F3D",
         },
         ember: {
-          50:  "#FFF1EE",
-          100: "#FFDFD7",
-          200: "#FFB7A6",
-          300: "#FF8B72",
-          400: "#FF5C3D",
-          500: "#E63A1B",  // primary CTA red (vermillion)
-          600: "#BF2A0F",
-          700: "#921E08",
+          50:  "#FEF2F2",
+          100: "#FEE2E2",
+          200: "#FECACA",
+          300: "#FCA5A5",
+          400: "#F87171",
+          500: "#DC2626",  // primary CTA red
+          600: "#B91C1C",
+          700: "#991B1B",
         },
         cream: {
           DEFAULT: "#F7F2E7",
