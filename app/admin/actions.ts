@@ -70,6 +70,114 @@ export async function approveSubmission(submissionId: string): Promise<ActionRes
 }
 
 // =====================================================================
+// Manually confirm the entry donation (dev/no-Givebutter path).
+// Flips pending_payment → pending_review and records a synthetic 'entry'
+// vote_transactions row so leaderboard + reconciliation totals stay
+// consistent. Idempotent: re-running just updates the timestamp.
+// =====================================================================
+export async function confirmEntryDonation(submissionId: string): Promise<ActionResult> {
+  const ctx = await requireAdmin();
+  const admin = createAdminClient();
+
+  const { data: row, error: fetchErr } = await admin
+    .from("pet_submissions")
+    .select("id, status, entry_donation_confirmed, user_id")
+    .eq("id", submissionId)
+    .maybeSingle();
+  if (fetchErr || !row) return { ok: false, error: "Submission not found." };
+
+  const updates: Record<string, unknown> = {
+    entry_donation_confirmed: true,
+  };
+  // Only advance status if still pending_payment; don't clobber later states.
+  if (row.status === "pending_payment") updates.status = "pending_review";
+
+  const { error: updErr } = await admin
+    .from("pet_submissions")
+    .update(updates)
+    .eq("id", submissionId);
+  if (updErr) return { ok: false, error: updErr.message };
+
+  // Record the $10 entry as CREDITS attached to the owner (not votes on
+  // their own pet). The owner can spend the resulting 10 votes on any
+  // approved pet from /account. Idempotent via deterministic txn id.
+  const entryTxnId = `manual:entry:${submissionId}`;
+  const { error: txnErr } = await admin
+    .from("vote_transactions")
+    .upsert(
+      {
+        pet_submission_id: null,
+        givebutter_transaction_id: entryTxnId,
+        kind: "entry",
+        amount_cents: 1000,
+        votes: 10,
+        donor_user_id: row.user_id,
+        parent_transaction_id: null,
+        created_by_admin: ctx.userId,
+        note: "Entry donation \u2014 credited to owner as spendable votes",
+      },
+      { onConflict: "givebutter_transaction_id" },
+    );
+  if (txnErr) return { ok: false, error: txnErr.message };
+
+  revalidatePath("/admin/submissions");
+  revalidatePath(`/admin/submissions/${submissionId}`);
+  revalidatePath("/account");
+  return { ok: true, message: "Entry donation confirmed." };
+}
+
+// =====================================================================
+// Add vote credits to a user (off-Givebutter / dev path)
+// Creates a credit row (pet_submission_id NULL) attributed to the user
+// who owns the given submission. They can spend it on /account.
+// =====================================================================
+const AddCreditsSchema = z.object({
+  submissionId: z.string().uuid(),
+  amountDollars: z.coerce.number().positive().max(100_000),
+  note: z.string().trim().max(500).optional().or(z.literal("").transform(() => undefined)),
+});
+
+export async function addVoteCredits(formData: FormData): Promise<ActionResult> {
+  const ctx = await requireAdmin();
+  const parsed = AddCreditsSchema.safeParse({
+    submissionId: formData.get("submissionId"),
+    amountDollars: formData.get("amountDollars"),
+    note: formData.get("note") ?? "",
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+  const admin = createAdminClient();
+
+  const { data: sub } = await admin
+    .from("pet_submissions")
+    .select("user_id")
+    .eq("id", parsed.data.submissionId)
+    .maybeSingle();
+  if (!sub) return { ok: false, error: "Submission not found." };
+
+  const amountCents = Math.round(parsed.data.amountDollars * 100);
+  const votes = Math.trunc(amountCents / 100);
+
+  const { error } = await admin.from("vote_transactions").insert({
+    pet_submission_id: null,
+    givebutter_transaction_id: `manual:credit:${crypto.randomUUID()}`,
+    kind: "manual",
+    amount_cents: amountCents,
+    votes,
+    donor_user_id: sub.user_id,
+    parent_transaction_id: null,
+    created_by_admin: ctx.userId,
+    note: parsed.data.note ?? "Off-Givebutter donation credited to user",
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/admin/submissions/${parsed.data.submissionId}`);
+  revalidatePath("/account");
+  return { ok: true, message: `Credited ${votes} votes ($${parsed.data.amountDollars}).` };
+}
+
+// =====================================================================
 // Reject a submission
 // =====================================================================
 const RejectSchema = z.object({
@@ -198,7 +306,6 @@ export async function updateGivebutterLinks(formData: FormData): Promise<ActionR
 const ManualVoteSchema = z.object({
   submissionId: z.string().uuid(),
   amountDollars: z.coerce.number().finite(),
-  votes: z.coerce.number().int(),
   note: z.string().trim().max(500).optional().or(z.literal("").transform(() => undefined)),
 });
 
@@ -207,18 +314,20 @@ export async function manualVoteAdjustment(formData: FormData): Promise<ActionRe
   const parsed = ManualVoteSchema.safeParse({
     submissionId: formData.get("submissionId"),
     amountDollars: formData.get("amountDollars"),
-    votes: formData.get("votes"),
     note: formData.get("note") ?? "",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
-  if (parsed.data.amountDollars === 0 && parsed.data.votes === 0) {
-    return { ok: false, error: "Adjustment must change either amount or votes." };
+  if (parsed.data.amountDollars === 0) {
+    return { ok: false, error: "Enter a non-zero donation amount." };
   }
 
   const admin = createAdminClient();
   const amountCents = Math.round(parsed.data.amountDollars * 100);
+  // Rule: $1 = 1 vote. Always derived from the donation amount; never
+  // admin-controlled. Negative amounts subtract votes (refunds/corrections).
+  const votes = Math.trunc(amountCents / 100);
   const txnId = `manual:${crypto.randomUUID()}`;
 
   const { error } = await admin.from("vote_transactions").insert({
@@ -226,7 +335,7 @@ export async function manualVoteAdjustment(formData: FormData): Promise<ActionRe
     givebutter_transaction_id: txnId,
     kind: "manual",
     amount_cents: amountCents,
-    votes: parsed.data.votes,
+    votes,
     created_by_admin: ctx.userId,
     note: parsed.data.note ?? null,
   });

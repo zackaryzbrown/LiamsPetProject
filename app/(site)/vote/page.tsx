@@ -4,12 +4,17 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { ContestStatusBadge } from "@/components/ContestStatusBadge";
 import { Button } from "@/components/ui/button";
 import { getApprovedPets, getPublicContest } from "@/lib/public-data";
+import { getUserVoteCreditBalance } from "@/lib/user-credits";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "View & Vote" };
 
 export default async function VotePage() {
-  const [pets, contest] = await Promise.all([getApprovedPets(), getPublicContest()]);
+  const [pets, contest, credit] = await Promise.all([
+    getApprovedPets(),
+    getPublicContest(),
+    getUserVoteCreditBalance(),
+  ]);
   const votingDeadlineMs = contest.votingDeadline
     ? new Date(contest.votingDeadline).getTime()
     : Number.POSITIVE_INFINITY;
@@ -57,7 +62,13 @@ export default async function VotePage() {
           <>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet, i) => (
-                <PetCard key={pet.id} pet={pet} rank={i} votingOpen={votingOpen} />
+                <PetCard
+                  key={pet.id}
+                  pet={pet}
+                  rank={i}
+                  votingOpen={votingOpen}
+                  userRemainingCredits={credit.remaining}
+                />
               ))}
             </div>
 
