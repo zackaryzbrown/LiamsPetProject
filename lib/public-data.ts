@@ -1,6 +1,5 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 
 // Public-facing reads. Uses the request-bound (anon) client so RLS is
@@ -75,24 +74,20 @@ export async function getPublicContest(): Promise<PublicContest> {
     };
   }
   const supabase = await createClient();
-  const admin = createAdminClient();
-  const [settingsRes, txnRes] = await Promise.all([
+  const [settingsRes, leaderboardRes] = await Promise.all([
     supabase
       .from("contest_settings")
       .select("contest_open, goal_amount_cents, submission_deadline, voting_deadline")
       .eq("id", 1)
       .maybeSingle(),
-    // Total raised counts only ORIGINAL transactions (parent IS NULL).
-    // Credit allocations (children) are pet-targeted bookkeeping, not new
-    // donations, so we exclude them to avoid double-counting.
-    admin
-      .from("vote_transactions")
-      .select("amount_cents")
-      .is("parent_transaction_id", null),
+    // pet_leaderboard already excludes credit rows (those have pet_submission_id = NULL)
+    // and counts allocation rows under their assigned pet, so summing here gives
+    // the true donated total without double-counting.
+    supabase.from("pet_leaderboard").select("total_amount_cents"),
   ]);
   const s = settingsRes.data;
-  const raisedAmountCents = (txnRes.data ?? []).reduce(
-    (sum, r) => sum + ((r.amount_cents as number) ?? 0),
+  const raisedAmountCents = (leaderboardRes.data ?? []).reduce(
+    (sum, r) => sum + ((r.total_amount_cents as number) ?? 0),
     0,
   );
   return {
