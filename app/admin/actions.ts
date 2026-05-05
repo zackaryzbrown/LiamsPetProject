@@ -86,7 +86,10 @@ export async function confirmEntryDonation(submissionId: string): Promise<Action
     .maybeSingle();
   if (fetchErr || !row) return { ok: false, error: "Submission not found." };
 
-  const updates: Record<string, unknown> = {
+  const updates: {
+    entry_donation_confirmed: boolean;
+    status?: "pending_review";
+  } = {
     entry_donation_confirmed: true,
   };
   // Only advance status if still pending_payment; don't clobber later states.
