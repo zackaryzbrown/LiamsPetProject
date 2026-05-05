@@ -92,6 +92,8 @@ export type Database = {
           raw_payload: Json;
           created_by_admin: string | null;
           note: string | null;
+          donor_user_id: string | null;
+          parent_transaction_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -105,12 +107,16 @@ export type Database = {
           raw_payload?: Json;
           created_by_admin?: string | null;
           note?: string | null;
+          donor_user_id?: string | null;
+          parent_transaction_id?: string | null;
         };
         Update: Partial<{
           pet_submission_id: string | null;
           amount_cents: number;
           votes: number;
           note: string | null;
+          donor_user_id: string | null;
+          parent_transaction_id: string | null;
         }>;
         Relationships: [];
       };
