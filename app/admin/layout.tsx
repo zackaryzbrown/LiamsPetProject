@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { signOut } from "@/app/auth/actions";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Inbox, Trophy, Settings, LogOut, ShieldCheck, GitMerge } from "lucide-react";
+import { LayoutDashboard, Inbox, Trophy, Settings, LogOut, ShieldCheck, GitMerge, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +31,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Badge tone="cream" className="hidden sm:inline-flex">
               {email}
             </Badge>
-            <Button asChild variant="ghost" size="sm" className="text-cream hover:bg-cream/10">
-              <Link href="/">View site</Link>
-            </Button>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-full border-2 border-cream bg-cream px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-cream-200"
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> View site
+            </Link>
             <form action={signOut}>
               <button
                 type="submit"

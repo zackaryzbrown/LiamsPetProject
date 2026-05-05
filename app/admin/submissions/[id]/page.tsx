@@ -10,6 +10,8 @@ import type { SubmissionStatus } from "@/lib/supabase/database.types";
 import { ChevronLeft } from "lucide-react";
 import {
   ApproveCard,
+  AddCreditsForm,
+  ConfirmEntryCard,
   RejectCard,
   GivebutterLinksForm,
   ManualVoteForm,
@@ -139,6 +141,9 @@ export default async function SubmissionDetailPage({
         </Card>
 
         <div className="grid gap-6">
+          {status === "pending_payment" && (
+            <ConfirmEntryCard submissionId={row.id as string} />
+          )}
           {status === "pending_review" || status === "approved" ? (
             <ApproveCard submissionId={row.id as string} alreadyApproved={status === "approved"} />
           ) : null}
@@ -174,6 +179,7 @@ export default async function SubmissionDetailPage({
                 </div>
               </div>
               <ManualVoteForm submissionId={row.id as string} />
+              <AddCreditsForm submissionId={row.id as string} />
               {(txns?.length ?? 0) > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
