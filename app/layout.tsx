@@ -21,15 +21,22 @@ export const metadata: Metadata = {
   },
   description:
     "A pet photo contest benefiting Soul Dog Rescue. Liam's Mile High Karate community service project. $1 donated = 1 vote.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   openGraph: {
     title: "Pets for Pups: A Soul Dog Rescue Fundraiser",
-    description: "Submit your pet, vote with a donation, help shelter dogs find homes.",
+    description:
+      "Submit your pet, vote with a donation, help shelter dogs find homes.",
     type: "website",
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>

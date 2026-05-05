@@ -23,10 +23,15 @@ export function Hero({ contestOpen, votingDeadline }: Props) {
       />
       <div className="container relative py-16 md:py-24">
         {votingDeadline && (
-          <ContestStatusBadge contestOpen={contestOpen} votingDeadline={votingDeadline} />
+          <ContestStatusBadge
+            contestOpen={contestOpen}
+            votingDeadline={votingDeadline}
+          />
         )}
-        <h1 className="mt-6 font-display font-black leading-[0.95] tracking-tight text-cream
-                       text-5xl sm:text-6xl md:text-7xl lg:text-[88px]">
+        <h1
+          className="mt-6 font-display font-black leading-[0.95] tracking-tight text-cream
+                       text-5xl sm:text-6xl md:text-7xl lg:text-[88px]"
+        >
           Cute pets.
           <span className="block">
             Rescue <span className="italic text-ember-300">dogs</span>.
@@ -35,9 +40,10 @@ export function Hero({ contestOpen, votingDeadline }: Props) {
         </h1>
 
         <p className="mt-6 max-w-2xl text-cream/85 text-lg md:text-xl leading-relaxed">
-          Submit your pet, share their best photo, and let the public vote with donations to{" "}
-          <span className="font-semibold text-white">Soul Dog Rescue</span>. It&apos;s Liam&apos;s
-          Mile High Karate community service project.
+          Submit your pet, share their best photo, and let the public vote with
+          donations to{" "}
+          <span className="font-semibold text-white">Soul Dog Rescue</span>.
+          It&apos;s Liam&apos;s Mile High Karate community service project.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">

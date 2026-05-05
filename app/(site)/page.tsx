@@ -35,7 +35,8 @@ export default async function HomePage() {
             How it <span className="italic text-ember-500">works</span>.
           </h2>
           <p className="mt-4 text-ink-muted text-lg">
-            Submitting a pet takes a couple of minutes. Voting takes about ten seconds.
+            Submitting a pet takes a couple of minutes. Voting takes about ten
+            seconds.
           </p>
         </div>
 
@@ -91,12 +92,14 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow text-ember-300">The mission</p>
             <h2 className="mt-3 font-display text-4xl md:text-5xl font-black leading-[1.05]">
-              We&apos;re raising <span className="italic text-ember-300">$500</span> for{" "}
+              We&apos;re raising{" "}
+              <span className="italic text-ember-300">$500</span> for{" "}
               <span className="text-white">Soul Dog Rescue</span>.
             </h2>
             <p className="mt-5 text-cream/80 text-lg leading-relaxed">
-              Soul Dog Rescue places dogs from overcrowded shelters into loving homes. This
-              fundraiser is part of Liam&apos;s community service project at Mile High Karate.
+              Soul Dog Rescue places dogs from overcrowded shelters into loving
+              homes. This fundraiser is part of Liam&apos;s community service
+              project at Mile High Karate.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild variant="ember" size="lg">
@@ -126,7 +129,9 @@ export default async function HomePage() {
         </div>
         <div className="container pb-12 flex items-center gap-3 text-cream/70">
           <PawMark size={18} className="text-ember-300" />
-          <span className="text-sm">Donations processed by Givebutter. Not refundable.</span>
+          <span className="text-sm">
+            Donations processed by Givebutter. Not refundable.
+          </span>
         </div>
       </section>
     </>
