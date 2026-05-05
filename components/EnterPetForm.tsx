@@ -63,7 +63,18 @@ export function EnterPetForm({ defaultEmail, defaultName }: Props) {
     setErrors({});
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
-      const result = await submitPet(fd);
+      let result: SubmissionResult;
+      try {
+        result = await submitPet(fd);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Submission failed.";
+        setTopError(
+          /body exceeded/i.test(msg)
+            ? "That photo is too large for the server to accept. Please try a smaller image (under 5MB)."
+            : `Submission failed: ${msg}`,
+        );
+        return;
+      }
       if (!result.ok) {
         setTopError(result.error);
         if (result.fieldErrors) setErrors(result.fieldErrors);
