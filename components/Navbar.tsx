@@ -16,7 +16,13 @@ const NAV = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
+export function Navbar({
+  isAdmin = false,
+  isSignedIn = false,
+}: {
+  isAdmin?: boolean;
+  isSignedIn?: boolean;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
 
@@ -56,8 +62,16 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
               <Link href="/admin">Admin</Link>
             </Button>
           )}
-          <Button asChild variant="ember" size="sm">
+          {isSignedIn && (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/account">Account</Link>
+            </Button>
+          )}
+          <Button asChild variant="ghost" size="sm">
             <Link href="/enter">Enter Your Pet</Link>
+          </Button>
+          <Button asChild variant="ember" size="sm">
+            <Link href="/vote">Donate</Link>
           </Button>
         </div>
 
@@ -86,6 +100,11 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
               </Link>
             ))}
             <Button asChild variant="ember" size="lg" className="mt-1">
+              <Link href="/vote" onClick={() => setOpen(false)}>
+                Donate
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg">
               <Link href="/enter" onClick={() => setOpen(false)}>
                 Enter Your Pet
               </Link>

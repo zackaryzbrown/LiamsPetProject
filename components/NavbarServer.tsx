@@ -18,5 +18,5 @@ export async function NavbarServer() {
       .maybeSingle();
     isAdmin = profile?.role === "admin";
   }
-  return <Navbar isAdmin={isAdmin} />;
+  return <Navbar isAdmin={isAdmin} isSignedIn={!!user} />;
 }

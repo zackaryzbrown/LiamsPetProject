@@ -48,19 +48,19 @@ export function Hero({ contestOpen, votingDeadline }: Props) {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild variant="ember" size="lg">
-            <Link href="/enter">
-              Enter your pet <ArrowRight className="h-4 w-4" />
+            <Link href="/vote">
+              Donate now <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button asChild variant="ghost" size="lg" className="bg-white/95">
-            <Link href="/vote">View &amp; vote</Link>
+            <Link href="/enter">Enter your pet</Link>
           </Button>
         </div>
 
         <dl className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl">
           {[
             { k: "Goal", v: "$500" },
-            { k: "Min entry", v: "$10" },
+            { k: "Per pet", v: "$10" },
             { k: "1 vote", v: "$1" },
             { k: "Closes", v: "Nov 13" },
           ].map((s) => (
