@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 35 56% 94%;            /* cream */
+    --foreground: 0 0% 4%;               /* ink */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --primary: 230 84% 51%;              /* royal-600 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 4%;
+    --secondary-foreground: 35 56% 94%;
+    --muted: 35 30% 88%;
+    --muted-foreground: 0 0% 24%;
+    --accent: 11 80% 50%;                /* ember-500 */
+    --accent-foreground: 0 0% 100%;
+    --border: 0 0% 4%;
+    --input: 0 0% 4%;
+    --ring: 230 84% 51%;
+    --radius: 1.25rem;
+  }
+
+  html, body { height: 100%; }
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection { background: #1F3EE6; color: #F7F2E7; }
+
+  h1, h2, h3, h4 { @apply font-display tracking-tight; }
+  h1 { font-feature-settings: "ss01"; }
+}
+
+@layer components {
+  .container-tight { @apply container max-w-5xl; }
+
+  /* Hand-cut card with ink shadow */
+  .ink-card {
+    @apply bg-white text-ink rounded-xl border-2 border-ink shadow-card;
+  }
+
+  /* Chunky CTA */
+  .btn-ember {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-ember-500 text-white px-6 py-3 font-semibold tracking-wide uppercase
+           border-2 border-ink shadow-cta transition
+           hover:-translate-y-[2px] hover:shadow-[0_1px_0_0_rgba(10,10,10,1),0_8px_0_-1px_rgba(10,10,10,1)]
+           active:translate-y-[2px] active:shadow-[0_1px_0_0_rgba(10,10,10,1),0_2px_0_-1px_rgba(10,10,10,1)]
+           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-royal-300/70;
+  }
+  .btn-ink {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-ink text-cream px-6 py-3 font-semibold tracking-wide uppercase
+           border-2 border-ink shadow-cta transition
+           hover:-translate-y-[2px] active:translate-y-[2px];
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-white text-ink px-5 py-2.5 font-semibold border-2 border-ink
+           hover:bg-cream-200 transition;
+  }
+
+  /* Royal blue panel + grainy depth */
+  .royal-panel {
+    @apply relative overflow-hidden bg-royal-700 text-cream;
+  }
+  .royal-panel::before {
+    content: "";
+    @apply absolute inset-0 bg-grain opacity-50 pointer-events-none mix-blend-overlay;
+  }
+
+  .eyebrow {
+    @apply inline-block uppercase tracking-[0.22em] text-xs font-semibold;
+  }
+
+  .stamp {
+    @apply inline-flex items-center justify-center rounded-full bg-ember-500 text-white
+           border-2 border-ink font-display italic font-black;
+  }
+}
