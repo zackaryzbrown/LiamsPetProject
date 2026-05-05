@@ -27,3 +27,35 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export type EmailSignInResult =
+  | { ok: true; email: string }
+  | { ok: false; error: string };
+
+export async function signInWithEmail(
+  _prev: EmailSignInResult | null,
+  formData: FormData,
+): Promise<EmailSignInResult> {
+  const rawEmail = (formData.get("email") ?? "").toString().trim().toLowerCase();
+  const next = (formData.get("next") ?? "/").toString();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+
+  const supabase = await createClient();
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const redirectTo = new URL("/auth/callback", origin);
+  if (next) redirectTo.searchParams.set("next", next);
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email: rawEmail,
+    options: {
+      emailRedirectTo: redirectTo.toString(),
+      shouldCreateUser: true,
+    },
+  });
+  if (error) return { ok: false, error: error.message };
+
+  return { ok: true, email: rawEmail };
+}

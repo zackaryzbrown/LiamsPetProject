@@ -5,6 +5,7 @@ import { signInWithGoogle } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PawMark } from "@/components/PawMark";
+import { EmailSignInForm } from "./EmailSignInForm";
 
 export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
@@ -52,6 +53,15 @@ export default async function LoginPage({
               Continue with Google
             </Button>
           </form>
+
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <span className="h-px flex-1 bg-ink/20" />
+            or
+            <span className="h-px flex-1 bg-ink/20" />
+          </div>
+
+          <EmailSignInForm next={next} />
+
           <p className="text-xs text-ink-muted text-center">
             By continuing, you agree to display your pet's photo publicly if approved.{" "}
             <Link href="/rules" className="underline">
