@@ -11,8 +11,8 @@ export default function AboutPage() {
       <section className="container py-16 md:py-24">
         <p className="eyebrow text-royal-700">About</p>
         <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight max-w-3xl">
-          A karate kid, a pile of <span className="italic text-ember-500">good dogs</span>, and one
-          $500 goal.
+          A karate kid raising <span className="italic text-ember-500">$500</span> for shelter
+          dogs.
         </h1>
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <p className="text-lg text-ink/85 leading-relaxed">
@@ -22,8 +22,8 @@ export default function AboutPage() {
           </p>
           <p className="text-lg text-ink/85 leading-relaxed">
             It&apos;s also <strong>Liam&apos;s community service project</strong> through Mile High
-            Karate. Black-belt requirements aren&apos;t just kicks and forms — they include showing
-            up for your community. This is Liam showing up.
+            Karate. Black belt requirements include showing up for your community, and this is
+            how Liam is showing up.
           </p>
         </div>
       </section>
@@ -42,7 +42,7 @@ export default function AboutPage() {
             },
             {
               k: "Liam's Project",
-              v: "Designed to raise $500 for shelter dogs through pet-photo voting.",
+              v: "Raising $500 for shelter dogs through pet photo voting.",
             },
           ].map((b) => (
             <Card key={b.k} className="bg-cream text-ink">

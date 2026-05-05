@@ -8,7 +8,7 @@ export type AdminContext = {
 };
 
 // Server-only admin gate. Use in admin layouts, pages, and at the top of
-// every admin server action — never trust the client. Redirects to /login
+// every admin server action - never trust the client. Redirects to /login
 // if not signed in, and to / if signed in but not an admin.
 export async function requireAdmin(): Promise<AdminContext> {
   const supabase = await createClient();

@@ -32,11 +32,10 @@ export default async function HomePage() {
         <div className="max-w-2xl">
           <p className="eyebrow text-royal-700">How it works</p>
           <h2 className="mt-3 font-display text-4xl md:text-5xl font-black tracking-tight">
-            Three steps. <span className="italic text-ember-500">Real</span> tails wagging.
+            How it <span className="italic text-ember-500">works</span>.
           </h2>
           <p className="mt-4 text-ink-muted text-lg">
-            Submitting a pet takes a couple of minutes. Voting takes about ten seconds, plus
-            whatever you can spare.
+            Submitting a pet takes a couple of minutes. Voting takes about ten seconds.
           </p>
         </div>
 
@@ -98,7 +97,6 @@ export default async function HomePage() {
             <p className="mt-5 text-cream/80 text-lg leading-relaxed">
               Soul Dog Rescue places dogs from overcrowded shelters into loving homes. This
               fundraiser is part of Liam&apos;s community service project at Mile High Karate.
-              Black belts, big hearts, bigger paws.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild variant="ember" size="lg">

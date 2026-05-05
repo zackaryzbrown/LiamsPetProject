@@ -194,7 +194,7 @@ export default async function SubmissionDetailPage({
                           </td>
                           <td className="py-1 pr-3 capitalize">{t.kind as string}</td>
                           <td className="py-1 pr-3 truncate max-w-[16ch]">
-                            {(t.donor_name as string) ?? "—"}
+                            {(t.donor_name as string) ?? "-"}
                           </td>
                           <td className="py-1 pr-3 text-right">
                             {formatCurrency(t.amount_cents as number)}

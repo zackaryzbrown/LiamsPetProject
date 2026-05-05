@@ -88,7 +88,7 @@ export default async function LeaderboardPage() {
                         Open
                       </a>
                     ) : (
-                      <span className="text-ink-muted">—</span>
+                      <span className="text-ink-muted">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3">

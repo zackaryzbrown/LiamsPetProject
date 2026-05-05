@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 
 // Public-facing reads. Uses the request-bound (anon) client so RLS is
-// enforced — anon can only see approved pets and the contest_settings row.
+// enforced - anon can only see approved pets and the contest_settings row.
 
 export type PublicPet = {
   id: string;

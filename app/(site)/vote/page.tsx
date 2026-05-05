@@ -44,8 +44,8 @@ export default async function VotePage() {
             <p className="eyebrow text-royal-700">No approved pets yet</p>
             <h2 className="mt-2 font-display text-3xl font-black">Be the first one in.</h2>
             <p className="mt-2 text-ink-muted max-w-md mx-auto">
-              The contest is fresh — entries appear here once an admin approves them. Submit your
-              pet to get the leaderboard rolling.
+              Entries appear here once an admin approves them. Submit your pet to get the
+              leaderboard rolling.
             </p>
             <div className="mt-5 flex justify-center">
               <Button asChild variant="ember" size="lg">

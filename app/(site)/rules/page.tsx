@@ -3,10 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata = { title: "Rules & FAQ" };
 
 const RULES = [
-  "Any pet is welcome — dogs, cats, rabbits, lizards, parrots. If they're loved, they qualify.",
+  "Any pet is welcome: dogs, cats, rabbits, lizards, parrots. If they're loved, they qualify.",
   "Multiple pets are allowed. Each pet requires its own $10 minimum entry donation.",
   "$1 donated = 1 vote. Votes are unlimited.",
-  "Votes can be split — donate separately to different pets to support more than one.",
+  "Votes can be split across pets by making separate donations.",
   "Submission deadline: November 13 at 11:59 PM.",
   "Voting deadline: November 13 at 11:59 PM.",
   "Donations are not refundable.",
@@ -47,7 +47,7 @@ export default function RulesPage() {
           Rules &amp;<span className="italic text-ember-500"> FAQ</span>.
         </h1>
         <p className="mt-5 text-ink-muted text-lg">
-          Short version: be kind, donate what you can, every dollar helps a real shelter dog.
+          Be kind, donate what you can. Every dollar helps a shelter dog.
         </p>
       </header>
 

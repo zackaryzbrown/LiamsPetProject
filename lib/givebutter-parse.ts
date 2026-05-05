@@ -1,4 +1,4 @@
-// Pure parsing / unit helpers — safe to import from both server and client
+// Pure parsing / unit helpers - safe to import from both server and client
 // components. No node built-ins, no secret env access.
 
 type Json = Record<string, unknown>;

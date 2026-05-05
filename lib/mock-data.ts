@@ -1,4 +1,4 @@
-// Mock data — replaced by Supabase queries in a later phase.
+// Mock data - replaced by Supabase queries in a later phase.
 export type MockPet = {
   id: string;
   petName: string;

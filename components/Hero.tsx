@@ -29,15 +29,15 @@ export function Hero({ contestOpen, votingDeadline }: Props) {
                        text-5xl sm:text-6xl md:text-7xl lg:text-[88px]">
           Cute pets.
           <span className="block">
-            <span className="italic text-ember-300">Real</span> rescue dogs.
+            Rescue <span className="italic text-ember-300">dogs</span>.
           </span>
-          <span className="block text-cream/90">A $500 mission.</span>
+          <span className="block text-cream/90">A $500 goal.</span>
         </h1>
 
         <p className="mt-6 max-w-2xl text-cream/85 text-lg md:text-xl leading-relaxed">
           Submit your pet, share their best photo, and let the public vote with donations to{" "}
           <span className="font-semibold text-white">Soul Dog Rescue</span>. It&apos;s Liam&apos;s
-          Mile High Karate community service project — and yes, every dollar counts (literally).
+          Mile High Karate community service project.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "./Navbar";
 
 // Server wrapper that decides whether to show the Admin link in the navbar.
-// The link itself is just a UI affordance — every /admin route still calls
+// The link itself is just a UI affordance - every /admin route still calls
 // requireAdmin() server-side, so hiding it here is purely cosmetic.
 export async function NavbarServer() {
   const supabase = await createClient();

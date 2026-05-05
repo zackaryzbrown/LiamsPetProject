@@ -15,10 +15,10 @@ export default function ContactPage() {
       <header>
         <p className="eyebrow text-royal-700">Contact</p>
         <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight">
-          Say hi. <span className="italic text-ember-500">Or send pet photos.</span>
+          Get in <span className="italic text-ember-500">touch</span>.
         </h1>
         <p className="mt-5 text-ink-muted text-lg max-w-md">
-          Questions about the contest, your submission, or Soul Dog Rescue? Drop us a line and
+          Questions about the contest, your submission, or Soul Dog Rescue? Send us a note and
           we&apos;ll get back to you.
         </p>
         <a

@@ -12,7 +12,7 @@ import {
 
 // Givebutter webhook receiver.
 //
-// Contract (intentionally permissive — see lib/givebutter-webhook.ts TODOs):
+// Contract (intentionally permissive - see lib/givebutter-webhook.ts TODOs):
 //   1. Read raw body, verify HMAC signature against GIVEBUTTER_WEBHOOK_SECRET.
 //   2. Persist EVERY inbound payload into webhook_events_raw before doing
 //      anything else (audit + replay).
@@ -29,7 +29,7 @@ import {
 //
 // We always respond 200 once the raw event is logged. Returning non-2xx
 // causes Givebutter to retry, which we don't want for parsing/mapping
-// issues — those are reconciled in /admin/reconciliation.
+// issues - those are reconciled in /admin/reconciliation.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   try {
     payload = rawBody.length > 0 ? JSON.parse(rawBody) : {};
   } catch {
-    // Log and ack — we don't want to retry malformed bodies.
+    // Log and ack - we don't want to retry malformed bodies.
     payload = { _parseError: true, _raw: rawBody.slice(0, 2000) };
   }
 
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         error: "Invalid signature",
       });
     } catch {
-      // Swallow — we're already returning 401.
+      // Swallow - we're already returning 401.
     }
     return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 401 });
   }
@@ -165,13 +165,13 @@ export async function POST(request: Request) {
 // =====================================================================
 // Pet mapping
 // =====================================================================
-// Tries the strongest signals first. Returns null if nothing matches —
+// Tries the strongest signals first. Returns null if nothing matches -
 // the raw event is still logged for admin reconciliation.
 async function mapToPet(
   admin: ReturnType<typeof createAdminClient>,
   parsed: ParsedTransaction,
 ): Promise<string | null> {
-  // 1. Custom field — strongest signal (we set this on the entry checkout URL).
+  // 1. Custom field - strongest signal (we set this on the entry checkout URL).
   if (parsed.customSubmissionId && isUuid(parsed.customSubmissionId)) {
     const { data } = await admin
       .from("pet_submissions")
@@ -212,7 +212,7 @@ async function mapToPet(
     if (data && data.length === 1) return data[0].id as string;
   }
 
-  // 5. Nothing matched — the admin will reconcile.
+  // 5. Nothing matched - the admin will reconcile.
   return null;
 }
 

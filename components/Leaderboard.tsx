@@ -7,7 +7,7 @@ export function Leaderboard({ pets }: { pets: PublicPet[] }) {
   if (sorted.length === 0) {
     return (
       <div className="ink-card p-8 text-center text-ink-muted">
-        No votes have been recorded yet — donate to a pet to put them on the board.
+        No votes have been recorded yet. Donate to a pet to put them on the board.
       </div>
     );
   }

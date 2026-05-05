@@ -24,7 +24,7 @@ export default async function ReconciliationPage() {
 
   const petOptions = (pets ?? []).map((p) => ({
     id: p.id as string,
-    label: `${p.pet_name as string} — ${p.owner_name as string} (${p.owner_email as string}) · ${p.status}`,
+    label: `${p.pet_name as string} - ${p.owner_name as string} (${p.owner_email as string}) · ${p.status}`,
   }));
 
   return (

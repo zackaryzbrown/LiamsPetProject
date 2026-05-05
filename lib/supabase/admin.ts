@@ -3,7 +3,7 @@ import { createClient as createSupabaseClient, type SupabaseClient } from "@supa
 import { env } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 
-// Service-role client — BYPASSES RLS. Server-only. Use for:
+// Service-role client - BYPASSES RLS. Server-only. Use for:
 //   * webhook handlers
 //   * admin server actions
 //   * storage uploads where path validation is enforced server-side

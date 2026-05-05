@@ -114,7 +114,6 @@ function Hero({ email }: { email?: string | null }) {
         </Badge>
         <h1 className="mt-5 font-display font-black text-cream text-5xl md:text-6xl tracking-tight">
           Enter your pet.
-          <span className="block italic text-ember-300">Make Liam (and Soul Dog) proud.</span>
         </h1>
         <p className="mt-5 max-w-2xl text-cream/85 text-lg">
           Submit your pet&apos;s photo, complete the $10 entry donation through Givebutter, and
@@ -157,7 +156,7 @@ function SideTips({ signedInAs }: { signedInAs?: string }) {
         <CardContent className="p-6">
           <p className="eyebrow text-royal-700">Multiple pets?</p>
           <p className="mt-2 text-ink-muted">
-            You can enter as many pets as you&apos;d like — each one needs its own $10 entry
+            You can enter as many pets as you&apos;d like. Each one needs its own $10 entry
             donation.
           </p>
         </CardContent>

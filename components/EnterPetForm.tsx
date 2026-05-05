@@ -81,7 +81,7 @@ export function EnterPetForm({ defaultEmail, defaultName }: Props) {
           window.location.href = result.donationUrl as string;
         }, 1200);
       } else {
-        // No donation URL configured yet — route to /submitted with the id
+        // No donation URL configured yet - route to /submitted with the id
         // so admins can still proceed manually.
         router.push(`/submitted?id=${result.submissionId}`);
       }

@@ -51,7 +51,7 @@ export const env = {
     return adminEmails();
   },
 
-  // Givebutter — optional during early phases; checked when used.
+  // Givebutter - optional during early phases; checked when used.
   get GIVEBUTTER_ENTRY_CHECKOUT_URL() {
     return optional("GIVEBUTTER_ENTRY_CHECKOUT_URL");
   },

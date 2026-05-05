@@ -65,15 +65,15 @@ export function ReconcileRow({
             <dl className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
               <Meta
                 label="Amount"
-                value={parsed.amountCents != null ? formatCurrency(parsed.amountCents) : "—"}
+                value={parsed.amountCents != null ? formatCurrency(parsed.amountCents) : "-"}
               />
-              <Meta label="Votes" value={votes != null ? votes.toLocaleString() : "—"} />
-              <Meta label="Donor" value={parsed.donorName ?? "—"} />
-              <Meta label="Email" value={parsed.donorEmail ?? "—"} />
-              <Meta label="Custom field" value={parsed.customSubmissionId ?? "—"} />
-              <Meta label="utm_content" value={parsed.utmContent ?? "—"} />
-              <Meta label="member_id" value={parsed.memberId ?? "—"} />
-              <Meta label="member slug" value={parsed.memberSlug ?? "—"} />
+              <Meta label="Votes" value={votes != null ? votes.toLocaleString() : "-"} />
+              <Meta label="Donor" value={parsed.donorName ?? "-"} />
+              <Meta label="Email" value={parsed.donorEmail ?? "-"} />
+              <Meta label="Custom field" value={parsed.customSubmissionId ?? "-"} />
+              <Meta label="utm_content" value={parsed.utmContent ?? "-"} />
+              <Meta label="member_id" value={parsed.memberId ?? "-"} />
+              <Meta label="member slug" value={parsed.memberSlug ?? "-"} />
             </dl>
             {event.error && (
               <p className="mt-2 text-xs text-ember-500">Error: {event.error}</p>
