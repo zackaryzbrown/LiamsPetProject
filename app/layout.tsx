@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -41,6 +43,8 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
