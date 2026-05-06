@@ -1,13 +1,29 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+
+// Derive the absolute URL of THIS request so OAuth redirects always come
+// back to the same domain the user is on (production, preview, or local).
+// Falls back to NEXT_PUBLIC_SITE_URL only if headers are unavailable.
+async function getRequestOrigin(): Promise<string> {
+  const h = await headers();
+  const host =
+    h.get("x-forwarded-host") ?? h.get("host") ?? null;
+  const proto =
+    h.get("x-forwarded-proto") ??
+    (host && host.startsWith("localhost") ? "http" : "https");
+  if (host) return `${proto}://${host}`;
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "https://liams-pet-project-zacksbrodevs-projects.vercel.app"
+  );
+}
 
 export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://liams-pet-project-zacksbrodevs-projects.vercel.app";
+  const origin = await getRequestOrigin();
   const redirectTo = new URL("/auth/callback", origin);
   if (next) redirectTo.searchParams.set("next", next);
 
@@ -51,9 +67,7 @@ export async function signInWithEmail(
   }
 
   const supabase = await createClient();
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://liams-pet-project-zacksbrodevs-projects.vercel.app";
+  const origin = await getRequestOrigin();
   const redirectTo = new URL("/auth/callback", origin);
   if (next) redirectTo.searchParams.set("next", next);
 
