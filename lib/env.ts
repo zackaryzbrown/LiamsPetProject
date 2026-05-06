@@ -31,7 +31,7 @@ export const env = {
     return required("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   },
   get NEXT_PUBLIC_SITE_URL() {
-    return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    return process.env.NEXT_PUBLIC_SITE_URL ?? "https://liams-pet-project-zacksbrodevs-projects.vercel.app";
   },
   get NEXT_PUBLIC_CONTACT_EMAIL() {
     return process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.org";

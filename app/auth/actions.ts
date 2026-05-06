@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://liams-pet-project-zacksbrodevs-projects.vercel.app";
   const redirectTo = new URL("/auth/callback", origin);
   if (next) redirectTo.searchParams.set("next", next);
 
@@ -44,7 +44,7 @@ export async function signInWithEmail(
   }
 
   const supabase = await createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://liams-pet-project-zacksbrodevs-projects.vercel.app";
   const redirectTo = new URL("/auth/callback", origin);
   if (next) redirectTo.searchParams.set("next", next);
 
