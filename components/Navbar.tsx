@@ -7,6 +7,7 @@ import { PawMark } from "./PawMark";
 import { Button } from "./ui/button";
 import { Menu, X } from "lucide-react";
 import * as React from "react";
+import { signOut } from "@/app/auth/actions";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -40,14 +41,17 @@ export function Navbar({
 
         <nav className="hidden md:flex items-center gap-1">
           {NAV.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "relative px-3 py-2 rounded-full text-sm font-semibold tracking-wide transition",
-                  active ? "bg-ink text-cream" : "hover:bg-cream-200"
+                  active ? "bg-ink text-cream" : "hover:bg-cream-200",
                 )}
               >
                 {item.label}
@@ -70,6 +74,19 @@ export function Navbar({
           <Button asChild variant="ghost" size="sm">
             <Link href="/enter">Enter Your Pet</Link>
           </Button>
+          {isSignedIn ? (
+            <form action={signOut}>
+              <Button type="submit" variant="ghost" size="sm">
+                Log out
+              </Button>
+            </form>
+          ) : (
+            <Button asChild variant="ghost" size="sm">
+              <Link href={`/login?next=${encodeURIComponent(pathname || "/")}`}>
+                Log in
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="ember" size="sm">
             <Link href="/vote">Donate</Link>
           </Button>
@@ -87,7 +104,10 @@ export function Navbar({
       </div>
 
       {open && (
-        <div id="mobile-menu" className="md:hidden border-t-2 border-ink bg-cream">
+        <div
+          id="mobile-menu"
+          className="md:hidden border-t-2 border-ink bg-cream"
+        >
           <div className="container py-4 grid gap-2">
             {NAV.map((item) => (
               <Link
@@ -113,6 +133,34 @@ export function Navbar({
               <Button asChild variant="ghost" size="lg">
                 <Link href="/admin" onClick={() => setOpen(false)}>
                   Admin
+                </Link>
+              </Button>
+            )}
+            {isSignedIn && (
+              <Button asChild variant="ghost" size="lg">
+                <Link href="/account" onClick={() => setOpen(false)}>
+                  Account
+                </Link>
+              </Button>
+            )}
+            {isSignedIn ? (
+              <form action={signOut}>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="lg"
+                  className="w-full"
+                >
+                  Log out
+                </Button>
+              </form>
+            ) : (
+              <Button asChild variant="ghost" size="lg">
+                <Link
+                  href={`/login?next=${encodeURIComponent(pathname || "/")}`}
+                  onClick={() => setOpen(false)}
+                >
+                  Log in
                 </Link>
               </Button>
             )}
