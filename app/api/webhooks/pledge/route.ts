@@ -6,6 +6,7 @@ import {
   isUuid,
   parsePledgeWebhook,
   votesFromAmountCents,
+  ENTRY_FEE_CENTS,
   type ParsedPledgeDonation,
 } from "@/lib/pledge-parse";
 import {
@@ -243,15 +244,42 @@ export async function POST(request: Request) {
   // Done only after the donation row has been successfully inserted so
   // we never lose an intent to a failed write. The intent will then be
   // skipped by future webhook lookups (e.g. replays).
+  let intentUserId: string | null = null;
   if (matchedIntentId && donationRow?.id) {
-    await admin
+    const { data: intentRow } = await admin
       .from("donation_intents")
       .update({
         consumed_at: new Date().toISOString(),
         consumed_donation_id: donationRow.id,
       })
       .eq("id", matchedIntentId)
-      .is("consumed_at", null);
+      .is("consumed_at", null)
+      .select("user_id")
+      .maybeSingle();
+    intentUserId = (intentRow?.user_id as string | null) ?? null;
+  }
+
+  // ---- Entry-overage → vote credits ----------------------------------
+  // The first $10 of an entry donation is the contest entry fee
+  // (non-refundable, 0 votes). Any overage becomes spendable vote
+  // credits in the entrant's wallet. Requires us to know which user
+  // submitted the entry, which we get from the matched donation_intent
+  // (entries are gated behind auth, so this is always populated for the
+  // real flow; if a webhook arrives without a matched intent we skip the
+  // deposit and the admin reconciliation tool can fix it manually).
+  if (
+    isEntryDonation &&
+    intentUserId &&
+    donationRow?.id &&
+    parsed.amountCents > ENTRY_FEE_CENTS
+  ) {
+    const overageCents = parsed.amountCents - ENTRY_FEE_CENTS;
+    await admin.from("vote_credit_ledger").insert({
+      user_id: intentUserId,
+      delta_cents: overageCents,
+      source_donation_id: donationRow.id,
+      reason: "entry_overage",
+    });
   }
 
   // ---- Apply vote increment to pet -----------------------------------

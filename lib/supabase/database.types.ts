@@ -233,6 +233,26 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      vote_credit_ledger: {
+        Row: {
+          id: string;
+          user_id: string;
+          delta_cents: number;
+          source_donation_id: string | null;
+          pet_submission_id: string | null;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          delta_cents: number;
+          source_donation_id?: string | null;
+          pet_submission_id?: string | null;
+          reason?: string | null;
+        };
+        Update: Partial<Record<string, never>>;
+        Relationships: [];
+      };
       contest_settings: {
         Row: {
           id: number;
@@ -280,6 +300,18 @@ export type Database = {
           p_reason: string;
         };
         Returns: Database["public"]["Tables"]["manual_vote_audit"]["Row"];
+      };
+      get_vote_credit_balance: {
+        Args: { p_user_id: string };
+        Returns: number;
+      };
+      spend_vote_credits: {
+        Args: {
+          p_user_id: string;
+          p_pet_submission_id: string;
+          p_cents: number;
+        };
+        Returns: number;
       };
     };
     Enums: { [_ in never]: never };

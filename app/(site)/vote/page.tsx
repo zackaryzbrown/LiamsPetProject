@@ -7,6 +7,7 @@ import { ContestStatusBadge } from "@/components/ContestStatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getApprovedPets, getPublicContest } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
+import { getCreditBalanceCents } from "@/lib/user-credits";
 import { MOCK_CONTEST } from "@/lib/mock-data";
 import { ArrowRight } from "lucide-react";
 
@@ -21,6 +22,7 @@ export default async function VotePage() {
     supabase.auth.getUser(),
   ]);
   const userEmail = user?.email ?? null;
+  const creditBalanceCents = user ? await getCreditBalanceCents(user.id) : 0;
 
   const c = contest ?? {
     contestOpen: MOCK_CONTEST.contestOpen,
@@ -74,7 +76,12 @@ export default async function VotePage() {
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet) => (
-                <PetCard key={pet.id} pet={pet} userEmail={userEmail} />
+                <PetCard
+                  key={pet.id}
+                  pet={pet}
+                  userEmail={userEmail}
+                  creditBalanceCents={creditBalanceCents}
+                />
               ))}
             </div>
             <div className="mt-12">

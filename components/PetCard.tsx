@@ -10,16 +10,20 @@ import { Heart } from "lucide-react";
 
 // =====================================================================
 // One pet on the /vote grid. Tapping "Donate to vote" opens the
-// VoteModal which links straight to Pledge.to. There is no credit
-// wallet; every dollar donated through Pledge.to counts as one vote
-// once the webhook receives the confirmation.
+// VoteModal, which offers two ways to add votes:
+//
+//   1. Spend existing vote credits (carried over from a previous entry
+//      donation that exceeded the $10 entry fee), or
+//   2. Make a fresh donation on Pledge.to ($1 = 1 vote).
 // =====================================================================
 export function PetCard({
   pet,
   userEmail,
+  creditBalanceCents = 0,
 }: {
   pet: PublicPet;
   userEmail?: string | null;
+  creditBalanceCents?: number;
 }) {
   const [open, setOpen] = React.useState(false);
   return (
@@ -49,11 +53,13 @@ export function PetCard({
               variant="ember"
               size="md"
               className="w-full"
-              disabled={!pet.pledgeDonationUrl}
+              disabled={!pet.pledgeDonationUrl && creditBalanceCents <= 0}
               onClick={() => setOpen(true)}
               aria-haspopup="dialog"
             >
-              {pet.pledgeDonationUrl ? "Donate to vote" : "Donation link coming soon"}
+              {pet.pledgeDonationUrl || creditBalanceCents > 0
+                ? "Vote for this pet"
+                : "Donation link coming soon"}
             </Button>
           </div>
         </div>
@@ -63,6 +69,7 @@ export function PetCard({
         open={open}
         onOpenChange={setOpen}
         userEmail={userEmail}
+        creditBalanceCents={creditBalanceCents}
       />
     </>
   );

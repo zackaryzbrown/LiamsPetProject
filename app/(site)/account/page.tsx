@@ -8,7 +8,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildVoteDonationUrl } from "@/lib/pledge";
 import { env } from "@/lib/env";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { getCreditBalanceCents, getCreditHistory } from "@/lib/user-credits";
+import { SpendCreditsCard } from "./_components/SpendCreditsCard";
+import { ArrowUpRight, ExternalLink, Wallet } from "lucide-react";
 import Image from "next/image";
 
 export const metadata = { title: "My account" };
@@ -41,12 +43,26 @@ export default async function AccountPage() {
   // Use the admin client for storage URL signing only — pet rows come
   // through RLS so the user only sees their own submissions.
   const admin = createAdminClient();
-  const { data: pets } = await supabase
-    .from("pet_submissions")
-    .select(
-      "id, pet_name, status, image_path, public_image_path, total_votes, total_donated_cents, pledge_donation_url, entry_donation_confirmed, rejection_reason, created_at",
-    )
-    .order("created_at", { ascending: false });
+  const [{ data: pets }, balanceCents, history, approvedPets] = await Promise.all([
+    supabase
+      .from("pet_submissions")
+      .select(
+        "id, pet_name, status, image_path, public_image_path, total_votes, total_donated_cents, pledge_donation_url, entry_donation_confirmed, rejection_reason, created_at",
+      )
+      .order("created_at", { ascending: false }),
+    getCreditBalanceCents(user.id),
+    getCreditHistory(user.id),
+    // Approved pets are public, so the anon client can read them.
+    supabase
+      .from("pet_submissions")
+      .select("id, pet_name")
+      .eq("status", "approved")
+      .order("pet_name", { ascending: true }),
+  ]);
+  const approvedOptions = (approvedPets.data ?? []).map((p) => ({
+    id: p.id as string,
+    name: p.pet_name as string,
+  }));
 
   const myPets = (pets ?? []).map((p) => {
     const imageUrl = p.public_image_path
@@ -70,6 +86,78 @@ export default async function AccountPage() {
         Your submissions.
       </h1>
       <p className="mt-3 text-ink-muted">{user.email}</p>
+
+      {/*
+        Vote-credit wallet. Filled when an entry donation exceeds the
+        $10 entry fee — the overage is credited here for the entrant to
+        spend on any approved pet. Lifetime activity from the ledger is
+        shown below the spend form so the user can audit deposits and
+        spends.
+      */}
+      <div className="mt-10 grid gap-5 md:grid-cols-[1fr_1fr]">
+        <Card>
+          <CardContent className="p-6 grid gap-3">
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-royal-700">
+              <Wallet className="h-4 w-4" />
+              Vote credit wallet
+            </div>
+            <p className="font-display text-4xl font-black tracking-tight">
+              {formatCurrency(balanceCents)}
+            </p>
+            <p className="text-sm text-ink-muted">
+              {formatNumber(Math.floor(balanceCents / 100))} vote
+              {Math.floor(balanceCents / 100) === 1 ? "" : "s"} ready to spend.
+              Credits come from entry donations over the $10 entry fee.
+            </p>
+          </CardContent>
+        </Card>
+        <SpendCreditsCard
+          balanceCents={balanceCents}
+          pets={approvedOptions}
+        />
+      </div>
+
+      {history.length > 0 && (
+        <Card className="mt-5">
+          <CardContent className="p-6 grid gap-3">
+            <p className="font-display text-xl font-black tracking-tight">
+              Wallet activity
+            </p>
+            <ul className="divide-y-2 divide-cream-200">
+              {history.map((row) => {
+                const positive = row.delta_cents > 0;
+                return (
+                  <li
+                    key={row.id}
+                    className="flex items-center justify-between gap-3 py-2 text-sm"
+                  >
+                    <div>
+                      <p className="font-semibold">
+                        {positive
+                          ? row.reason === "entry_overage"
+                            ? "Entry donation overage"
+                            : (row.reason ?? "Credit")
+                          : `Voted for ${row.pet_name ?? "a pet"}`}
+                      </p>
+                      <p className="text-xs text-ink-muted">
+                        {new Date(row.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <p
+                      className={`font-display text-lg font-black ${
+                        positive ? "text-royal-700" : "text-ember-700"
+                      }`}
+                    >
+                      {positive ? "+" : "−"}
+                      {formatCurrency(Math.abs(row.delta_cents))}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mt-10 grid gap-5">
         {myPets.length === 0 && (

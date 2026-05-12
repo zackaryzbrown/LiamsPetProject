@@ -241,6 +241,13 @@ export function votesFromAmountCents(amountCents: number): number {
 }
 
 // =====================================================================
+// Pet-entry fee. The first $10 of an entry donation covers the
+// non-refundable contest entry; any overage is converted to spendable
+// vote credits in the entrant's wallet.
+// =====================================================================
+export const ENTRY_FEE_CENTS = 1000;
+
+// =====================================================================
 // Donation-type classification
 // =====================================================================
 // TODO: confirm Pledge.to event-type strings. Until then, anything that

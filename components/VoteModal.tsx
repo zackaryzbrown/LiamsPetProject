@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { PublicPet } from "@/lib/public-data";
 import { recordVoteIntent } from "@/app/(site)/vote/actions";
-import { ArrowUpRight, Heart, Loader2, ShieldCheck } from "lucide-react";
+import { spendVoteCreditsAction } from "@/app/(site)/account/actions";
+import { ArrowUpRight, Heart, Loader2, ShieldCheck, Wallet } from "lucide-react";
 
 type Props = {
   pet: PublicPet;
@@ -23,22 +25,47 @@ type Props = {
   // Email of the currently signed-in user, if any. Skip the prompt
   // entirely when we already have an email we can attribute against.
   userEmail?: string | null;
+  // Signed-in user's spendable wallet, in cents. Non-zero unlocks the
+  // "Spend credits" mode that calls `spendVoteCreditsAction` directly
+  // instead of opening Pledge.to.
+  creditBalanceCents?: number;
 };
 
 // =====================================================================
 // Donate-to-vote modal.
 //
-// We collect an email up front from anonymous voters (and pre-fill it
-// for signed-in users) so the webhook can attribute the incoming Pledge
-// donation back to this pet via donor email — Pledge's hosted donation
-// page drops URL query params, so submission_id / utm_content are not
-// reliably forwarded to the webhook payload. The recorded intent row
-// expires after 60 minutes.
+// Two ways to add votes:
+//
+//   - Spend credits: signed-in users who have a positive
+//     vote_credit_ledger balance (typically from a previous entry
+//     donation that exceeded the $10 entry fee) can apply them
+//     directly to this pet without going through Pledge.to.
+//   - Donate: open Pledge.to in a new tab. We collect an email up
+//     front so the webhook can attribute the donation back to this pet
+//     via donor email (Pledge's hosted page drops URL params, so
+//     submission_id / utm_content are not reliably forwarded). The
+//     recorded intent row expires after 60 minutes.
 // =====================================================================
-export function VoteModal({ pet, open, onOpenChange, userEmail }: Props) {
+export function VoteModal({
+  pet,
+  open,
+  onOpenChange,
+  userEmail,
+  creditBalanceCents = 0,
+}: Props) {
+  const router = useRouter();
   const [email, setEmail] = React.useState(userEmail ?? "");
   const [pending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
+
+  const maxCreditVotes = Math.floor(creditBalanceCents / 100);
+  const canSpendCredits = maxCreditVotes > 0;
+  const [mode, setMode] = React.useState<"credits" | "donate">(
+    canSpendCredits ? "credits" : "donate",
+  );
+  const [creditVotes, setCreditVotes] = React.useState<string>(
+    canSpendCredits ? String(Math.min(5, maxCreditVotes)) : "1",
+  );
 
   // Reset transient state whenever the modal opens for a fresh pet.
   React.useEffect(() => {
@@ -46,8 +73,10 @@ export function VoteModal({ pet, open, onOpenChange, userEmail }: Props) {
       setError(null);
     } else {
       setEmail(userEmail ?? "");
+      setMode(canSpendCredits ? "credits" : "donate");
+      setCreditVotes(canSpendCredits ? String(Math.min(5, maxCreditVotes)) : "1");
     }
-  }, [open, userEmail]);
+  }, [open, userEmail, canSpendCredits, maxCreditVotes]);
 
   const donationUrl = pet.pledgeDonationUrl;
 
@@ -75,6 +104,33 @@ export function VoteModal({ pet, open, onOpenChange, userEmail }: Props) {
     });
   }
 
+  function handleSpendCredits() {
+    const votes = Number.parseInt(creditVotes, 10);
+    if (!Number.isFinite(votes) || votes < 1) {
+      setError("Enter how many votes (whole dollars) to spend.");
+      return;
+    }
+    if (votes > maxCreditVotes) {
+      setError(
+        `You only have ${maxCreditVotes} vote${maxCreditVotes === 1 ? "" : "s"} available.`,
+      );
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("petSubmissionId", pet.id);
+      fd.set("votes", String(votes));
+      const result = await spendVoteCreditsAction(fd);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      onOpenChange(false);
+      router.refresh();
+    });
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -90,10 +146,10 @@ export function VoteModal({ pet, open, onOpenChange, userEmail }: Props) {
           </div>
           <div className="p-5 sm:py-6 sm:pr-6 grid gap-4">
             <header>
-              <DialogTitle>Donate to vote for {pet.petName}</DialogTitle>
+              <DialogTitle>Vote for {pet.petName}</DialogTitle>
               <DialogDescription className="mt-1">
-                Every dollar you donate counts as one vote. All donations go
-                directly to Soul Dog Rescue via Pledge.to.
+                Every dollar counts as one vote. All donations go directly
+                to Soul Dog Rescue via Pledge.to.
               </DialogDescription>
             </header>
 
@@ -102,7 +158,101 @@ export function VoteModal({ pet, open, onOpenChange, userEmail }: Props) {
               Currently {formatNumber(pet.totalVotes)} votes
             </div>
 
-            {donationUrl ? (
+            {canSpendCredits && (
+              <div
+                role="tablist"
+                aria-label="Choose how to vote"
+                className="grid grid-cols-2 gap-2 rounded-2xl border-2 border-ink bg-cream-100 p-1 text-sm font-semibold"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === "credits"}
+                  onClick={() => setMode("credits")}
+                  className={`rounded-xl px-3 py-2 transition ${
+                    mode === "credits"
+                      ? "bg-ink text-cream"
+                      : "text-ink hover:bg-cream-200"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Wallet className="h-3.5 w-3.5" />
+                    Use credits
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === "donate"}
+                  onClick={() => setMode("donate")}
+                  className={`rounded-xl px-3 py-2 transition ${
+                    mode === "donate"
+                      ? "bg-ink text-cream"
+                      : "text-ink hover:bg-cream-200"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    Donate more
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {mode === "credits" && canSpendCredits ? (
+              <>
+                <div className="rounded-xl border-2 border-ink bg-cream-50 px-3 py-2 text-sm">
+                  <p className="font-semibold">
+                    Wallet balance: {formatCurrency(creditBalanceCents)} ·{" "}
+                    {formatNumber(maxCreditVotes)} vote
+                    {maxCreditVotes === 1 ? "" : "s"} available
+                  </p>
+                  <p className="mt-1 text-xs text-ink-muted">
+                    Credits come from entry donations over $10. They go
+                    straight to this pet&apos;s vote total — no extra
+                    donation needed.
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="creditVotes">
+                    Votes to spend on {pet.petName}
+                  </Label>
+                  <Input
+                    id="creditVotes"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={maxCreditVotes}
+                    step={1}
+                    value={creditVotes}
+                    onChange={(e) => setCreditVotes(e.target.value)}
+                    disabled={pending}
+                  />
+                </div>
+                {error && (
+                  <p
+                    role="alert"
+                    className="rounded-xl border-2 border-ember-500 bg-ember-50 px-3 py-2 text-sm text-ember-700"
+                  >
+                    {error}
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="ember"
+                  size="lg"
+                  onClick={handleSpendCredits}
+                  disabled={pending}
+                >
+                  {pending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Heart className="h-4 w-4" />
+                  )}
+                  {pending ? "Casting votes…" : "Cast votes from wallet"}
+                </Button>
+              </>
+            ) : donationUrl ? (
               <>
                 <div className="grid gap-2">
                   <Label htmlFor="voterEmail">
