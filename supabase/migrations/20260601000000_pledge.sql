@@ -25,6 +25,11 @@ drop type if exists public.vote_kind;
 -- ---------------------------------------------------------------------
 -- pet_submissions: drop Givebutter, add Pledge + denormalized totals
 -- ---------------------------------------------------------------------
+-- Drop the legacy RLS policy first because it references
+-- givebutter_member_url (it required that column to be NULL on insert).
+-- A new pet_submissions_insert_owner policy is recreated below.
+drop policy if exists pet_submissions_insert_owner on public.pet_submissions;
+
 alter table public.pet_submissions
   drop column if exists givebutter_member_url,
   drop column if exists givebutter_member_id;
