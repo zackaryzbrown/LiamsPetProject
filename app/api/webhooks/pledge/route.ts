@@ -282,6 +282,35 @@ export async function POST(request: Request) {
     });
   }
 
+  // ---- General fundraiser donations → vote credits -------------------
+  // A donation that didn't map to any pet (e.g. the navbar "Donate"
+  // button which points at the campaign-wide fundraiser page) gets
+  // attributed to the donor's wallet so they can spend it as votes
+  // later. We match by donor_email → auth.users.email. If there's no
+  // matching account, the donation still counts toward "raised" but no
+  // wallet credit is issued — admins can resolve those via the
+  // reconciliation queue.
+  if (
+    !petSubmissionId &&
+    donationRow?.id &&
+    parsed.amountCents > 0 &&
+    parsed.donorEmail
+  ) {
+    const { data: userIdData } = await admin.rpc("find_user_id_by_email", {
+      p_email: parsed.donorEmail,
+    });
+    const generalUserId =
+      typeof userIdData === "string" ? userIdData : null;
+    if (generalUserId) {
+      await admin.from("vote_credit_ledger").insert({
+        user_id: generalUserId,
+        delta_cents: parsed.amountCents,
+        source_donation_id: donationRow.id,
+        reason: "general_donation",
+      });
+    }
+  }
+
   // ---- Apply vote increment to pet -----------------------------------
   // Entry donations earn ZERO votes regardless of amount. Submitting a
   // pet is not voting for a pet. The full amount still counts toward

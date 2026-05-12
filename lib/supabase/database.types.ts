@@ -313,6 +313,10 @@ export type Database = {
         };
         Returns: number;
       };
+      find_user_id_by_email: {
+        Args: { p_email: string };
+        Returns: string | null;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
