@@ -4,21 +4,26 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-// Derive the absolute URL of THIS request so OAuth redirects always come
-// back to the same domain the user is on (production, preview, or local).
-// Falls back to NEXT_PUBLIC_SITE_URL only if headers are unavailable.
+// Derive the absolute URL of THIS request so OAuth redirects come back to
+// the same domain the user is on.
+//
+// IMPORTANT: prefer NEXT_PUBLIC_SITE_URL when set. Amplify's Lambda SSR
+// runtime can return a bogus `host` header (sometimes literally
+// "localhost:3000" from the build-time defaults), which would cause
+// Supabase to redirect the user off-domain after sign-in. Headers are
+// only used as a fallback for local dev where the env var is absent.
 async function getRequestOrigin(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured && configured.length > 0) {
+    return configured.replace(/\/+$/, "");
+  }
   const h = await headers();
-  const host =
-    h.get("x-forwarded-host") ?? h.get("host") ?? null;
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? null;
   const proto =
     h.get("x-forwarded-proto") ??
     (host && host.startsWith("localhost") ? "http" : "https");
   if (host) return `${proto}://${host}`;
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://main.derbbj6vexl0w.amplifyapp.com"
-  );
+  return "https://main.derbbj6vexl0w.amplifyapp.com";
 }
 
 export async function signInWithGoogle(next?: string) {
