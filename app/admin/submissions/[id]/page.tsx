@@ -84,30 +84,40 @@ export default async function SubmissionDetailPage({
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-        <div className="ink-card p-3">
-          <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-ink bg-cream-200">
-            {imageUrl ? (
-              <Image src={imageUrl} alt={pet.pet_name} fill sizes="280px" className="object-cover" />
-            ) : (
-              <div className="h-full w-full grid place-items-center text-sm text-ink-muted">
-                No photo uploaded
-              </div>
+      <div className="grid lg:grid-cols-[280px_1fr] gap-6 items-start">
+        <div className="grid gap-4 lg:sticky lg:top-6">
+          <div className="ink-card p-3">
+            <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-ink bg-cream-200">
+              {imageUrl ? (
+                <Image src={imageUrl} alt={pet.pet_name} fill sizes="280px" className="object-cover" />
+              ) : (
+                <div className="h-full w-full grid place-items-center text-sm text-ink-muted">
+                  No photo uploaded
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="ink-card p-4 grid gap-2 text-sm">
+            <p className="text-xs uppercase tracking-widest text-ink-muted">Quick stats</p>
+            <p>
+              <span className="font-semibold tabular-nums">{formatNumber(pet.total_votes)}</span> votes
+            </p>
+            <p>
+              <span className="font-semibold tabular-nums">{formatCurrency(pet.total_donated_cents)}</span> raised
+            </p>
+            <p>
+              <span className="font-semibold tabular-nums">{donations?.length ?? 0}</span> donations on file
+            </p>
+            {pet.manual_vote_adjustment !== 0 && (
+              <p className="text-ink-muted">
+                Manual adj: {pet.manual_vote_adjustment >= 0 ? "+" : ""}
+                {pet.manual_vote_adjustment}
+              </p>
             )}
           </div>
         </div>
 
         <div className="grid gap-4">
-          <PledgeLinksForm
-            submissionId={pet.id}
-            initial={{
-              pledgeDonationUrl: pet.pledge_donation_url,
-              pledgeWidgetId: pet.pledge_widget_id,
-              pledgeCampaignId: pet.pledge_campaign_id,
-              pledgeMappingKey: pet.pledge_mapping_key,
-            }}
-          />
-
           <div className="grid md:grid-cols-2 gap-4">
             {pet.status !== "approved" && <ApproveCard submissionId={pet.id} />}
             {pet.status !== "rejected" && <RejectCard submissionId={pet.id} />}
@@ -115,6 +125,36 @@ export default async function SubmissionDetailPage({
           </div>
 
           <ManualVoteForm submissionId={pet.id} />
+
+          <details className="ink-card p-5 group">
+            <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+              <div>
+                <p className="font-display text-xl font-black">Advanced: Pledge.to linking</p>
+                <p className="text-sm text-ink-muted">
+                  Optional per-pet overrides. Leave blank for normal entries — the entry flow
+                  already passes a <code className="font-mono">submission_id</code> custom field
+                  which the webhook uses to map donations to this pet.
+                </p>
+              </div>
+              <span
+                aria-hidden
+                className="shrink-0 rounded-full border-2 border-ink px-3 py-1 text-xs font-semibold uppercase tracking-widest group-open:bg-ink group-open:text-cream"
+              >
+                Edit
+              </span>
+            </summary>
+            <div className="mt-4 border-t-2 border-ink/10 pt-4">
+              <PledgeLinksForm
+                submissionId={pet.id}
+                initial={{
+                  pledgeDonationUrl: pet.pledge_donation_url,
+                  pledgeWidgetId: pet.pledge_widget_id,
+                  pledgeCampaignId: pet.pledge_campaign_id,
+                  pledgeMappingKey: pet.pledge_mapping_key,
+                }}
+              />
+            </div>
+          </details>
 
           <RemoveCard submissionId={pet.id} petName={pet.pet_name} />
         </div>
