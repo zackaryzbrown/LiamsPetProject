@@ -6,6 +6,7 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { ContestStatusBadge } from "@/components/ContestStatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getApprovedPets, getPublicContest } from "@/lib/public-data";
+import { createClient } from "@/lib/supabase/server";
 import { MOCK_CONTEST } from "@/lib/mock-data";
 import { ArrowRight } from "lucide-react";
 
@@ -13,10 +14,13 @@ export const metadata = { title: "Vote with a donation" };
 export const dynamic = "force-dynamic";
 
 export default async function VotePage() {
-  const [contest, pets] = await Promise.all([
+  const supabase = await createClient();
+  const [contest, pets, { data: { user } }] = await Promise.all([
     getPublicContest(),
     getApprovedPets(),
+    supabase.auth.getUser(),
   ]);
+  const userEmail = user?.email ?? null;
 
   const c = contest ?? {
     contestOpen: MOCK_CONTEST.contestOpen,
@@ -70,7 +74,7 @@ export default async function VotePage() {
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {pets.map((pet) => (
-                <PetCard key={pet.id} pet={pet} />
+                <PetCard key={pet.id} pet={pet} userEmail={userEmail} />
               ))}
             </div>
             <div className="mt-12">

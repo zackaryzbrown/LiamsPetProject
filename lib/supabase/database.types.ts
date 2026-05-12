@@ -208,6 +208,31 @@ export type Database = {
         Update: Partial<Record<string, never>>;
         Relationships: [];
       };
+      donation_intents: {
+        Row: {
+          id: string;
+          pet_submission_id: string;
+          user_id: string | null;
+          donor_email: string | null;
+          intent_type: "entry" | "vote";
+          created_at: string;
+          expires_at: string;
+          consumed_at: string | null;
+          consumed_donation_id: string | null;
+        };
+        Insert: {
+          pet_submission_id: string;
+          user_id?: string | null;
+          donor_email?: string | null;
+          intent_type: "entry" | "vote";
+          expires_at?: string;
+        };
+        Update: Partial<{
+          consumed_at: string | null;
+          consumed_donation_id: string | null;
+        }>;
+        Relationships: [];
+      };
       contest_settings: {
         Row: {
           id: number;

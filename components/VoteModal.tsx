@@ -9,23 +9,72 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatNumber } from "@/lib/utils";
 import type { PublicPet } from "@/lib/public-data";
-import { ArrowUpRight, Heart, ShieldCheck } from "lucide-react";
+import { recordVoteIntent } from "@/app/(site)/vote/actions";
+import { ArrowUpRight, Heart, Loader2, ShieldCheck } from "lucide-react";
 
 type Props = {
   pet: PublicPet;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Email of the currently signed-in user, if any. Skip the prompt
+  // entirely when we already have an email we can attribute against.
+  userEmail?: string | null;
 };
 
 // =====================================================================
-// Donate-to-vote modal. We only render a single primary CTA — the
-// Pledge.to donation link — because Pledge.to is the only donation
-// platform. Donors choose their amount inside Pledge's hosted flow;
-// $1 = 1 vote, applied automatically by our webhook.
+// Donate-to-vote modal.
+//
+// We collect an email up front from anonymous voters (and pre-fill it
+// for signed-in users) so the webhook can attribute the incoming Pledge
+// donation back to this pet via donor email — Pledge's hosted donation
+// page drops URL query params, so submission_id / utm_content are not
+// reliably forwarded to the webhook payload. The recorded intent row
+// expires after 60 minutes.
 // =====================================================================
-export function VoteModal({ pet, open, onOpenChange }: Props) {
+export function VoteModal({ pet, open, onOpenChange, userEmail }: Props) {
+  const [email, setEmail] = React.useState(userEmail ?? "");
+  const [pending, startTransition] = React.useTransition();
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Reset transient state whenever the modal opens for a fresh pet.
+  React.useEffect(() => {
+    if (!open) {
+      setError(null);
+    } else {
+      setEmail(userEmail ?? "");
+    }
+  }, [open, userEmail]);
+
+  const donationUrl = pet.pledgeDonationUrl;
+
+  function handleDonate() {
+    if (!donationUrl) return;
+    const trimmed = email.trim();
+    if (trimmed.length === 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError("Please enter the email you'll use on Pledge.to.");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const result = await recordVoteIntent({
+        petSubmissionId: pet.id,
+        donorEmail: trimmed,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      // Open Pledge in a new tab — the intent row will live in our DB
+      // for 60 minutes while the donor completes the donation.
+      window.open(donationUrl, "_blank", "noopener,noreferrer");
+      onOpenChange(false);
+    });
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -53,16 +102,50 @@ export function VoteModal({ pet, open, onOpenChange }: Props) {
               Currently {formatNumber(pet.totalVotes)} votes
             </div>
 
-            {pet.pledgeDonationUrl ? (
-              <Button asChild variant="ember" size="lg">
-                <a
-                  href={pet.pledgeDonationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+            {donationUrl ? (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="voterEmail">
+                    Email you&apos;ll use on Pledge.to
+                  </Label>
+                  <Input
+                    id="voterEmail"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    disabled={pending}
+                  />
+                  <p className="text-xs text-ink-muted">
+                    We use this to match your donation back to {pet.petName}.
+                    Use the same email when checking out on Pledge.to.
+                  </p>
+                </div>
+                {error && (
+                  <p
+                    role="alert"
+                    className="rounded-xl border-2 border-ember-500 bg-ember-50 px-3 py-2 text-sm text-ember-700"
+                  >
+                    {error}
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="ember"
+                  size="lg"
+                  onClick={handleDonate}
+                  disabled={pending}
                 >
-                  Donate on Pledge.to <ArrowUpRight className="h-4 w-4" />
-                </a>
-              </Button>
+                  {pending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4" />
+                  )}
+                  {pending ? "Opening Pledge…" : "Donate on Pledge.to"}
+                </Button>
+              </>
             ) : (
               <p
                 role="alert"

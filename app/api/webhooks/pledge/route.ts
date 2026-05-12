@@ -119,9 +119,12 @@ export async function POST(request: Request) {
 
   // ---- Map to pet ----------------------------------------------------
   let petSubmissionId: string | null = null;
+  let matchedIntentId: string | null = null;
   let mapError: string | null = null;
   try {
-    petSubmissionId = await mapDonationToPet(admin, parsed);
+    const mapped = await mapDonationToPet(admin, parsed);
+    petSubmissionId = mapped.petSubmissionId;
+    matchedIntentId = mapped.intentId;
   } catch (err) {
     mapError = err instanceof Error ? err.message : String(err);
   }
@@ -236,6 +239,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: donationErr.message }, { status: 500 });
   }
 
+  // ---- Mark the matched donation_intent as consumed ------------------
+  // Done only after the donation row has been successfully inserted so
+  // we never lose an intent to a failed write. The intent will then be
+  // skipped by future webhook lookups (e.g. replays).
+  if (matchedIntentId && donationRow?.id) {
+    await admin
+      .from("donation_intents")
+      .update({
+        consumed_at: new Date().toISOString(),
+        consumed_donation_id: donationRow.id,
+      })
+      .eq("id", matchedIntentId)
+      .is("consumed_at", null);
+  }
+
   // ---- Apply vote increment to pet -----------------------------------
   // Entry donations earn ZERO votes regardless of amount. Submitting a
   // pet is not voting for a pet. The full amount still counts toward
@@ -308,7 +326,7 @@ export async function POST(request: Request) {
 async function mapDonationToPet(
   admin: ReturnType<typeof createAdminClient>,
   parsed: ParsedPledgeDonation,
-): Promise<string | null> {
+): Promise<{ petSubmissionId: string | null; intentId: string | null }> {
   // 1. Custom field `submission_id` → direct UUID match.
   if (isUuid(parsed.customSubmissionId)) {
     const { data } = await admin
@@ -316,7 +334,7 @@ async function mapDonationToPet(
       .select("id")
       .eq("id", parsed.customSubmissionId)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data?.id) return { petSubmissionId: data.id as string, intentId: null };
   }
 
   // 2. utm_content set to the pet UUID.
@@ -326,7 +344,7 @@ async function mapDonationToPet(
       .select("id")
       .eq("id", parsed.utmContent)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data?.id) return { petSubmissionId: data.id as string, intentId: null };
   }
 
   // 3. pledge_mapping_key configured by admin.
@@ -336,7 +354,7 @@ async function mapDonationToPet(
       .select("id")
       .eq("pledge_mapping_key", parsed.mappingKey)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data?.id) return { petSubmissionId: data.id as string, intentId: null };
   }
 
   // 4. widget_id (per-pet Pledge widget).
@@ -346,7 +364,7 @@ async function mapDonationToPet(
       .select("id")
       .eq("pledge_widget_id", parsed.widgetId)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data?.id) return { petSubmissionId: data.id as string, intentId: null };
   }
 
   // 5. campaign_id (per-pet Pledge campaign).
@@ -356,8 +374,34 @@ async function mapDonationToPet(
       .select("id")
       .eq("pledge_campaign_id", parsed.campaignId)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data?.id) return { petSubmissionId: data.id as string, intentId: null };
   }
 
-  return null;
+  // 6. Donor-email intent lookup. Pledge's hosted donation page drops
+  //    URL query params, so signals 1–5 are unreachable for the common
+  //    "click donate-to-vote" flow. As a fallback, we look for the most
+  //    recent un-consumed donation_intent record for this donor email
+  //    that hasn't expired yet. The intent was recorded the moment the
+  //    user clicked "Donate to vote" (or submitted their pet) and is
+  //    keyed off the email they will use on Pledge.to.
+  if (parsed.donorEmail) {
+    const normalizedEmail = parsed.donorEmail.toLowerCase().trim();
+    const { data } = await admin
+      .from("donation_intents")
+      .select("id, pet_submission_id")
+      .ilike("donor_email", normalizedEmail)
+      .is("consumed_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.pet_submission_id) {
+      return {
+        petSubmissionId: data.pet_submission_id as string,
+        intentId: (data.id as string) ?? null,
+      };
+    }
+  }
+
+  return { petSubmissionId: null, intentId: null };
 }

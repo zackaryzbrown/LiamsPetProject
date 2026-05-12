@@ -14,7 +14,13 @@ import { Heart } from "lucide-react";
 // wallet; every dollar donated through Pledge.to counts as one vote
 // once the webhook receives the confirmation.
 // =====================================================================
-export function PetCard({ pet }: { pet: PublicPet }) {
+export function PetCard({
+  pet,
+  userEmail,
+}: {
+  pet: PublicPet;
+  userEmail?: string | null;
+}) {
   const [open, setOpen] = React.useState(false);
   return (
     <>
@@ -52,7 +58,12 @@ export function PetCard({ pet }: { pet: PublicPet }) {
           </div>
         </div>
       </div>
-      <VoteModal pet={pet} open={open} onOpenChange={setOpen} />
+      <VoteModal
+        pet={pet}
+        open={open}
+        onOpenChange={setOpen}
+        userEmail={userEmail}
+      />
     </>
   );
 }

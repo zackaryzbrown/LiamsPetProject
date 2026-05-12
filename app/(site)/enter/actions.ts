@@ -106,7 +106,20 @@ export async function enterPet(formData: FormData): Promise<EnterResult> {
 
   revalidatePath("/admin/submissions");
 
-  // Step 4: Pledge.to entry donation URL.
+  // Step 4: Record a donation intent so the webhook can attribute the
+  // incoming entry donation back to this pet by donor email — Pledge's
+  // hosted donation page drops URL query params, so submission_id /
+  // utm_content are not reliably forwarded to the webhook payload.
+  await admin.from("donation_intents").insert({
+    pet_submission_id: inserted.id,
+    user_id: user.id,
+    donor_email: parsed.data.ownerEmail,
+    intent_type: "entry",
+  });
+
+  // Step 5: Pledge.to entry donation URL (still includes submission_id
+  // as a belt-and-braces signal in case Pledge ever starts forwarding
+  // query params).
   const donationUrl = buildEntryDonationUrl(inserted.id);
   return { ok: true, submissionId: inserted.id, donationUrl };
 }
