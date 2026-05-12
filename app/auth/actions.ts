@@ -17,7 +17,7 @@ async function getRequestOrigin(): Promise<string> {
   if (host) return `${proto}://${host}`;
   return (
     process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://liams-pet-project-zacksbrodevs-projects.vercel.app"
+    "https://main.derbbj6vexl0w.amplifyapp.com"
   );
 }
 

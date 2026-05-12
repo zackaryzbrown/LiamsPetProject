@@ -1,36 +1,34 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildVoteDonationUrl } from "@/lib/pledge";
 import { env } from "@/lib/env";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import type { SubmissionStatus } from "@/lib/supabase/database.types";
-import { ArrowRight, ExternalLink, Sparkles } from "lucide-react";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
+export const metadata = { title: "My account" };
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Your account" };
 
-const STATUS_TONE: Record<SubmissionStatus, "ember" | "royal" | "cream" | "ink"> = {
-  pending_payment: "ember",
-  pending_review: "cream",
-  approved: "royal",
-  rejected: "ink",
-};
+type StatusTone = "ember" | "ink" | "cream" | "royal";
 
-const STATUS_HINT: Record<SubmissionStatus, string> = {
-  pending_payment: "Complete the $10 entry donation to move forward.",
-  pending_review: "Entry confirmed. Waiting for admin to approve your photo.",
-  approved: "Live on the vote page. Share your link to collect votes.",
-  rejected: "Not accepted. See the reason below.",
-};
-
-function publicImageUrl(path: string | null) {
-  if (!path) return null;
-  return `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${env.SUPABASE_BUCKET_PUBLIC}/${path}`;
+function statusBadge(status: string): { tone: StatusTone; label: string } {
+  switch (status) {
+    case "pending_payment":
+      return { tone: "ember", label: "Awaiting donation" };
+    case "pending_review":
+      return { tone: "royal", label: "Pending review" };
+    case "approved":
+      return { tone: "ink", label: "Approved" };
+    case "rejected":
+      return { tone: "cream", label: "Rejected" };
+    default:
+      return { tone: "cream", label: status };
+  }
 }
 
 export default async function AccountPage() {
@@ -40,172 +38,103 @@ export default async function AccountPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/account");
 
-  // Use admin client to read aggregated vote totals (RLS would hide other
-  // people's vote rows, but we only ever query for this user's pets).
+  // Use the admin client for storage URL signing only — pet rows come
+  // through RLS so the user only sees their own submissions.
   const admin = createAdminClient();
-
-  const { data: pets } = await admin
+  const { data: pets } = await supabase
     .from("pet_submissions")
     .select(
-      "id, pet_name, status, image_path, public_image_path, givebutter_member_url, rejection_reason, created_at, approved_at",
+      "id, pet_name, status, image_path, public_image_path, total_votes, total_donated_cents, pledge_donation_url, entry_donation_confirmed, rejection_reason, created_at",
     )
-    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const petIds = (pets ?? []).map((p) => p.id as string);
-  const { data: txns } = petIds.length
-    ? await admin
-        .from("vote_transactions")
-        .select("pet_submission_id, votes, amount_cents")
-        .in("pet_submission_id", petIds)
-    : { data: [] as { pet_submission_id: string; votes: number; amount_cents: number }[] };
-
-  const totalsByPet = new Map<string, { votes: number; cents: number }>();
-  for (const t of txns ?? []) {
-    const id = t.pet_submission_id as string;
-    const cur = totalsByPet.get(id) ?? { votes: 0, cents: 0 };
-    cur.votes += (t.votes as number) ?? 0;
-    cur.cents += (t.amount_cents as number) ?? 0;
-    totalsByPet.set(id, cur);
-  }
-
-  // Vote credits owned by this user (parent rows with no pet attached).
-  const { data: creditRows } = await admin
-    .from("vote_transactions")
-    .select("votes")
-    .eq("donor_user_id", user.id)
-    .is("pet_submission_id", null)
-    .is("parent_transaction_id", null);
-  const totalCredits = (creditRows ?? []).reduce(
-    (s, r) => s + ((r.votes as number) ?? 0),
-    0,
-  );
-  // Allocations spent against those credits.
-  const { data: spentRows } = await admin
-    .from("vote_transactions")
-    .select("votes")
-    .eq("donor_user_id", user.id)
-    .not("parent_transaction_id", "is", null);
-  const alreadySpent = (spentRows ?? []).reduce(
-    (s, r) => s + ((r.votes as number) ?? 0),
-    0,
-  );
-  const remainingCredits = Math.max(0, totalCredits - alreadySpent);
+  const myPets = (pets ?? []).map((p) => {
+    const imageUrl = p.public_image_path
+      ? admin.storage.from(env.SUPABASE_BUCKET_PUBLIC).getPublicUrl(p.public_image_path).data
+          .publicUrl
+      : null;
+    return {
+      ...p,
+      imageUrl,
+      voteUrl:
+        p.status === "approved"
+          ? buildVoteDonationUrl(p.id, p.pledge_donation_url)
+          : null,
+    };
+  });
 
   return (
-    <section className="container py-12 md:py-16 max-w-4xl">
-      <p className="eyebrow text-royal-700">Your account</p>
-      <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight">
-        Your pets &amp; votes
+    <section className="container py-12 md:py-16 max-w-5xl">
+      <p className="eyebrow text-royal-700">Account</p>
+      <h1 className="mt-3 font-display text-4xl md:text-5xl font-black tracking-tight">
+        Your submissions.
       </h1>
-      <p className="mt-4 text-ink-muted max-w-2xl">
-        Track your submissions and the votes they&apos;ve received. Votes come from public
-        donations to your pet on Givebutter — <strong>$1 = 1 vote</strong>.
-      </p>
+      <p className="mt-3 text-ink-muted">{user.email}</p>
 
-      {totalCredits > 0 && (
-        <Card className="mt-10 border-royal-700/40">
-          <CardContent className="p-6 grid gap-4 sm:grid-cols-[1fr_auto] items-center">
-            <div>
-              <p className="eyebrow text-royal-700 flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" /> Your vote credits
-              </p>
-              <h2 className="mt-1 font-display text-3xl font-black">
-                {remainingCredits} vote{remainingCredits === 1 ? "" : "s"} remaining
-              </h2>
-              <p className="text-sm text-ink-muted mt-1">
-                {totalCredits} total · {alreadySpent} already cast. Spend them on the vote
-                page — you can split across any approved pet.
-              </p>
-            </div>
-            <Button asChild variant="ember" size="lg" disabled={remainingCredits === 0}>
-              <Link href="/vote">
-                Go vote <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="mt-8 grid gap-6">
-        {(pets ?? []).length === 0 && (
+      <div className="mt-10 grid gap-5">
+        {myPets.length === 0 && (
           <Card>
-            <CardContent className="p-6 grid gap-3">
-              <h2 className="font-display text-2xl font-black">No submissions yet</h2>
-              <p className="text-ink-muted">
-                Enter your pet to join the contest. The $10 entry donation kicks them off
-                with 10 votes.
-              </p>
-              <div>
-                <Button asChild variant="ember">
-                  <Link href="/enter">
-                    Enter your pet <ArrowRight className="h-4 w-4" />
-                  </Link>
+            <CardContent className="p-8 grid gap-4 text-center">
+              <p className="font-display text-2xl font-black">No submissions yet.</p>
+              <p className="text-ink-muted">Enter your first pet to get on the leaderboard.</p>
+              <div className="flex justify-center">
+                <Button asChild variant="ember" size="lg">
+                  <Link href="/enter">Enter your pet</Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {(pets ?? []).map((p) => {
-          const status = p.status as SubmissionStatus;
-          const totals = totalsByPet.get(p.id as string) ?? { votes: 0, cents: 0 };
-          const url = publicImageUrl(p.public_image_path as string | null);
+        {myPets.map((p) => {
+          const status = statusBadge(p.status);
           return (
-            <Card key={p.id as string}>
-              <CardContent className="p-6 grid gap-5 sm:grid-cols-[160px_1fr]">
-                <div className="relative aspect-square w-full overflow-hidden rounded-xl border-2 border-ink bg-cream-200">
-                  {url ? (
-                    <Image
-                      src={url}
-                      alt={p.pet_name as string}
-                      fill
-                      sizes="160px"
-                      className="object-cover"
-                    />
+            <Card key={p.id}>
+              <CardContent className="p-5 md:p-6 grid gap-5 md:grid-cols-[120px_1fr_auto] items-center">
+                <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-2xl border-2 border-ink overflow-hidden bg-cream-200 shrink-0 mx-auto md:mx-0">
+                  {p.imageUrl ? (
+                    <Image src={p.imageUrl} alt={p.pet_name} fill sizes="128px" className="object-cover" />
                   ) : (
-                    <div className="grid h-full place-items-center text-xs text-ink-muted text-center px-2">
-                      Photo not yet public
+                    <div className="h-full w-full grid place-items-center text-xs text-ink-muted text-center px-2">
+                      Photo pending approval
                     </div>
                   )}
                 </div>
-                <div className="grid gap-3 content-start">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <h2 className="font-display text-3xl font-black">{p.pet_name as string}</h2>
-                    <Badge tone={STATUS_TONE[status]}>{status.replace("_", " ")}</Badge>
+                <div className="grid gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-display text-2xl font-black tracking-tight">{p.pet_name}</p>
+                    <Badge tone={status.tone}>{status.label}</Badge>
                   </div>
-                  <p className="text-sm text-ink-muted">{STATUS_HINT[status]}</p>
-
-                  <div className="grid grid-cols-2 gap-3 max-w-md">
-                    <Stat label="Votes received" value={formatNumber(totals.votes)} />
-                    <Stat label="Donated to your pet" value={formatCurrency(totals.cents)} />
-                  </div>
-
-                  {status === "rejected" && p.rejection_reason && (
-                    <div className="rounded-xl border-2 border-ember-500/30 bg-ember-50 p-3 text-sm">
-                      <p className="eyebrow text-ember-500">Reason</p>
-                      <p className="mt-1">{p.rejection_reason as string}</p>
-                    </div>
+                  {p.status === "approved" && (
+                    <p className="text-sm text-ink-muted">
+                      <strong>{formatNumber(p.total_votes)}</strong> votes ·{" "}
+                      <strong>{formatCurrency(p.total_donated_cents)}</strong> raised
+                    </p>
                   )}
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {status === "approved" && p.givebutter_member_url && (
-                      <Button asChild variant="ember" size="sm">
-                        <a
-                          href={p.givebutter_member_url as string}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Share donation link <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {status === "approved" && (
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href="/vote">View on /vote</Link>
-                      </Button>
-                    )}
-                  </div>
+                  {p.status === "pending_payment" && !p.entry_donation_confirmed && (
+                    <p className="text-sm text-ink-muted">
+                      Complete the $10 entry donation on Pledge.to to move this pet into review.
+                    </p>
+                  )}
+                  {p.status === "rejected" && p.rejection_reason && (
+                    <p className="text-sm text-ember-700">Rejected: {p.rejection_reason}</p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {p.voteUrl && (
+                    <Button asChild variant="ember" size="sm">
+                      <a href={p.voteUrl} target="_blank" rel="noopener noreferrer">
+                        Share donation link <ArrowUpRight className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                  {p.status === "approved" && (
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/vote">
+                        View on leaderboard <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -213,14 +142,5 @@ export default async function AccountPage() {
         })}
       </div>
     </section>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border-2 border-ink bg-cream-100 p-3">
-      <p className="eyebrow text-royal-700 text-[10px]">{label}</p>
-      <p className="font-display text-2xl font-black mt-0.5">{value}</p>
-    </div>
   );
 }

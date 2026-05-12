@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "A pet photo contest benefiting Soul Dog Rescue. Liam's Mile High Karate community service project. $1 donated = 1 vote.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ??
-      "https://liams-pet-project-zacksbrodevs-projects.vercel.app",
+      "https://main.derbbj6vexl0w.amplifyapp.com",
   ),
   openGraph: {
     title: "Pets for Pups: A Soul Dog Rescue Fundraiser",

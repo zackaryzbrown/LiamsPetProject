@@ -1,281 +1,120 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/validation";
-import { submitPet, type SubmissionResult } from "@/app/(site)/enter/actions";
-import { cn } from "@/lib/utils";
+import { Loader2, UploadCloud } from "lucide-react";
+
+type SubmitResult =
+  | { ok: true; submissionId: string; donationUrl: string | null }
+  | { ok: false; error: string };
 
 type Props = {
-  defaultEmail?: string;
-  defaultName?: string;
+  // Server action that creates the pending submission and returns the
+  // pre-built Pledge.to entry donation URL. The form receives the URL
+  // and redirects the donor straight to Pledge.to.
+  action: (formData: FormData) => Promise<SubmitResult>;
 };
 
-export function EnterPetForm({ defaultEmail, defaultName }: Props) {
+// =====================================================================
+// Pet entry form. Owners fill out their info + upload a photo. On
+// successful submission we hand off to Pledge.to for the $10 entry
+// donation. The webhook flips status to pending_review and an admin
+// approves the photo before the pet appears publicly.
+// =====================================================================
+export function EnterPetForm({ action }: Props) {
   const router = useRouter();
+  const [pending, start] = React.useTransition();
+  const [error, setError] = React.useState<string | null>(null);
+  const [fileName, setFileName] = React.useState<string | null>(null);
   const formRef = React.useRef<HTMLFormElement>(null);
-  const [isPending, startTransition] = React.useTransition();
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
-  const [topError, setTopError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<SubmissionResult & { ok: true } | null>(null);
-
-  // File preview
-  const [file, setFile] = React.useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    if (!file) {
-      setPreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  function onPickFile(input: HTMLInputElement) {
-    const f = input.files?.[0];
-    if (!f) {
-      setFile(null);
-      return;
-    }
-    if (!ALLOWED_IMAGE_TYPES.includes(f.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
-      setErrors((e) => ({ ...e, photo: "Photo must be a JPG, PNG, or WEBP image" }));
-      input.value = "";
-      return;
-    }
-    if (f.size > MAX_IMAGE_BYTES) {
-      setErrors((e) => ({ ...e, photo: "Photo must be 5MB or smaller" }));
-      input.value = "";
-      return;
-    }
-    setErrors(({ photo: _drop, ...rest }) => rest);
-    setFile(f);
-  }
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setTopError(null);
-    setErrors({});
-    const fd = new FormData(e.currentTarget);
-    startTransition(async () => {
-      let result: SubmissionResult;
-      try {
-        result = await submitPet(fd);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Submission failed.";
-        setTopError(
-          /body exceeded/i.test(msg)
-            ? "That photo is too large for the server to accept. Please try a smaller image (under 5MB)."
-            : `Submission failed: ${msg}`,
-        );
-        return;
-      }
-      if (!result.ok) {
-        setTopError(result.error);
-        if (result.fieldErrors) setErrors(result.fieldErrors);
-        return;
-      }
-      setSuccess(result);
-      // Clear form (mostly for tidiness; we'll redirect shortly).
-      formRef.current?.reset();
-      setFile(null);
-      // If Givebutter is configured, send the user to the donation URL.
-      if (result.donationUrl) {
-        // Give a beat for the success card to render before redirecting
-        // outbound, so users see "submission saved" feedback.
-        window.setTimeout(() => {
-          window.location.href = result.donationUrl as string;
-        }, 1200);
-      } else {
-        // No donation URL configured yet - route to /submitted with the id
-        // so admins can still proceed manually.
-        router.push(`/submitted?id=${result.submissionId}`);
-      }
-    });
-  }
-
-  if (success) {
-    return (
-      <div className="ink-card p-8 grid gap-4 animate-rise-in">
-        <div className="flex items-center gap-3">
-          <span className="grid place-items-center h-12 w-12 rounded-full bg-ember-500 text-white border-2 border-ink">
-            <CheckCircle2 className="h-6 w-6" />
-          </span>
-          <div>
-            <p className="eyebrow text-royal-700">Submission saved</p>
-            <h2 className="font-display text-2xl font-black">Now: the $10 entry donation</h2>
-          </div>
-        </div>
-        <p className="text-ink/85">
-          Your pet has been saved with status <strong>pending payment</strong>. Complete your $10
-          entry donation through Givebutter to lock in your spot. After that, an admin will review
-          and approve your photo before it appears publicly.
-        </p>
-        {success.donationUrl ? (
-          <Button asChild variant="ember" size="lg" className="w-full sm:w-auto">
-            <a href={success.donationUrl}>
-              Continue to Givebutter <ArrowRight className="h-4 w-4" />
-            </a>
-          </Button>
-        ) : (
-          <div className="rounded-xl border-2 border-ink bg-cream-100 p-4 text-sm">
-            Donation link is not configured yet. Your submission ID is{" "}
-            <code className="font-mono">{success.submissionId}</code>. Please contact the contest
-            organizer to complete your entry donation.
-          </div>
-        )}
-        <p className="text-xs text-ink-muted">
-          Donations are processed by Givebutter. Donations are not refundable.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <form
       ref={formRef}
-      onSubmit={onSubmit}
-      noValidate
       className="grid gap-6"
-      aria-busy={isPending}
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError(null);
+        const fd = new FormData(e.currentTarget);
+        start(async () => {
+          const r = await action(fd);
+          if (!r.ok) {
+            setError(r.error);
+            return;
+          }
+          // Hand off to Pledge.to for the $10 entry donation.
+          if (r.donationUrl) {
+            window.location.href = r.donationUrl;
+            return;
+          }
+          router.push(`/submitted?id=${r.submissionId}`);
+        });
+      }}
     >
-      {topError && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="rounded-xl border-2 border-ember-500 bg-ember-50 p-3 text-sm text-ember-700"
-        >
-          {topError}
+      <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid gap-2">
+          <Label htmlFor="ownerName">Your name</Label>
+          <Input id="ownerName" name="ownerName" required maxLength={120} placeholder="Jane Doe" />
         </div>
-      )}
-
-      <div className="grid gap-2">
-        <Label htmlFor="ownerName">Owner name</Label>
-        <Input
-          id="ownerName"
-          name="ownerName"
-          defaultValue={defaultName ?? ""}
-          placeholder="Jane Doe"
-          required
-          aria-invalid={!!errors.ownerName}
-          aria-describedby={errors.ownerName ? "ownerName-error" : undefined}
-        />
-        {errors.ownerName && <FieldError id="ownerName-error" msg={errors.ownerName} />}
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="ownerEmail">Email</Label>
           <Input
             id="ownerEmail"
             name="ownerEmail"
             type="email"
-            defaultValue={defaultEmail ?? ""}
-            placeholder="jane@example.com"
             required
-            aria-invalid={!!errors.ownerEmail}
-            aria-describedby={errors.ownerEmail ? "ownerEmail-error" : undefined}
+            maxLength={254}
+            placeholder="jane@example.com"
           />
-          {errors.ownerEmail && <FieldError id="ownerEmail-error" msg={errors.ownerEmail} />}
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid gap-2">
+          <Label htmlFor="ownerPhone">Phone (optional)</Label>
+          <Input id="ownerPhone" name="ownerPhone" maxLength={20} placeholder="555-555-1234" />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="ownerPhone">Phone</Label>
-          <Input
-            id="ownerPhone"
-            name="ownerPhone"
-            type="tel"
-            placeholder="(555) 010-1234"
-            aria-invalid={!!errors.ownerPhone}
-            aria-describedby={errors.ownerPhone ? "ownerPhone-error" : undefined}
-          />
-          {errors.ownerPhone && <FieldError id="ownerPhone-error" msg={errors.ownerPhone} />}
+          <Label htmlFor="petName">Pet&apos;s name</Label>
+          <Input id="petName" name="petName" required maxLength={80} placeholder="Biscuit" />
         </div>
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="petName">Pet name</Label>
-        <Input
-          id="petName"
-          name="petName"
-          placeholder="Biscuit"
-          required
-          aria-invalid={!!errors.petName}
-          aria-describedby={errors.petName ? "petName-error" : undefined}
-        />
-        {errors.petName && <FieldError id="petName-error" msg={errors.petName} />}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="photo">Pet photo</Label>
+        <Label htmlFor="image">Pet photo (JPG/PNG/WEBP, max 5MB)</Label>
         <label
-          htmlFor="photo"
-          className={cn(
-            "relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink bg-cream-100 p-6 text-center cursor-pointer hover:bg-cream-200 transition min-h-44",
-            errors.photo && "border-ember-500 bg-ember-50",
-          )}
+          htmlFor="image"
+          className="flex items-center gap-3 rounded-xl border-2 border-dashed border-ink bg-cream-100 px-4 py-6 cursor-pointer hover:bg-cream-200 transition"
         >
-          {previewUrl ? (
-            <div className="grid grid-cols-[auto_1fr] gap-4 items-center w-full">
-              <div className="relative h-28 w-28 rounded-xl overflow-hidden border-2 border-ink">
-                <Image src={previewUrl} alt="Selected preview" fill className="object-cover" />
-              </div>
-              <div className="text-left">
-                <p className="font-display text-lg font-black truncate">{file?.name}</p>
-                <p className="text-sm text-ink-muted">
-                  {file ? (file.size / 1024 / 1024).toFixed(1) : "0"} MB ·{" "}
-                  {file?.type.replace("image/", "").toUpperCase()}
-                </p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setFile(null);
-                    const input = document.getElementById("photo") as HTMLInputElement | null;
-                    if (input) input.value = "";
-                  }}
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold underline text-ink-muted"
-                >
-                  <X className="h-3 w-3" /> Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <ImagePlus className="h-8 w-8 text-royal-700" />
-              <span className="mt-2 font-display text-xl font-black">Drop a photo here</span>
-              <span className="mt-1 text-sm text-ink-muted">JPG, PNG, or WEBP · max 5MB</span>
-            </>
-          )}
+          <UploadCloud className="h-5 w-5 text-royal-700" />
+          <span className="font-semibold">
+            {fileName ?? "Choose a photo of your pet"}
+          </span>
         </label>
         <input
-          id="photo"
-          name="photo"
+          id="image"
+          name="image"
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          required
           className="sr-only"
-          aria-invalid={!!errors.photo}
-          aria-describedby={errors.photo ? "photo-error" : undefined}
-          onChange={(e) => onPickFile(e.currentTarget)}
+          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
         />
-        {errors.photo && <FieldError id="photo-error" msg={errors.photo} />}
       </div>
 
-      <fieldset className="grid gap-3 rounded-xl border-2 border-ink bg-cream-100 p-4">
+      <div className="grid gap-3 rounded-2xl border-2 border-ink bg-cream-100 p-5">
         <label className="flex items-start gap-3 text-sm">
           <input
             type="checkbox"
             name="consentPublic"
             required
-            className="mt-1 h-5 w-5 accent-ember-500"
+            className="mt-1 h-5 w-5 rounded border-2 border-ink"
           />
           <span>
-            I grant permission to display this pet&apos;s photo publicly on this fundraiser site
-            and related promotional materials.
+            I consent to my pet&apos;s photo and name being displayed publicly on the voting page.
           </span>
         </label>
         <label className="flex items-start gap-3 text-sm">
@@ -283,39 +122,40 @@ export function EnterPetForm({ defaultEmail, defaultName }: Props) {
             type="checkbox"
             name="acknowledgedNonrefundable"
             required
-            className="mt-1 h-5 w-5 accent-ember-500"
+            className="mt-1 h-5 w-5 rounded border-2 border-ink"
           />
           <span>
-            I understand the $10 entry donation is required and that{" "}
-            <strong>donations are not refundable</strong>.
+            I understand the $10 entry donation goes to Soul Dog Rescue via{" "}
+            <strong>Pledge.to</strong> and is non-refundable.
           </span>
         </label>
-      </fieldset>
+      </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <p className="text-sm text-ink-muted max-w-md">
-          After submitting, you&apos;ll be sent to Givebutter to complete the $10 entry donation.
+      {error && (
+        <p
+          role="alert"
+          className="rounded-xl border-2 border-ember-500 bg-ember-50 px-4 py-3 text-sm text-ember-700"
+        >
+          {error}
         </p>
-        <Button type="submit" variant="ember" size="lg" disabled={isPending}>
-          {isPending ? (
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" variant="ember" size="lg" disabled={pending}>
+          {pending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
             </>
           ) : (
-            <>
-              Continue to donation <ArrowRight className="h-4 w-4" />
-            </>
+            "Continue to $10 donation"
           )}
         </Button>
+        <p className="text-sm text-ink-muted">
+          You&apos;ll be sent to Pledge.to to complete your entry donation.
+        </p>
       </div>
-    </form>
-  );
-}
 
-function FieldError({ id, msg }: { id?: string; msg: string }) {
-  return (
-    <p id={id} role="alert" className="text-sm font-semibold text-ember-700">
-      {msg}
-    </p>
+      <Textarea name="note" hidden readOnly aria-hidden tabIndex={-1} value="" />
+    </form>
   );
 }

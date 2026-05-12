@@ -1,138 +1,128 @@
 import Link from "next/link";
 import { Hero } from "@/components/Hero";
 import { GoalProgress } from "@/components/GoalProgress";
-import { WaveDivider } from "@/components/WaveDivider";
+import { Leaderboard } from "@/components/Leaderboard";
 import { Button } from "@/components/ui/button";
-import { PawMark } from "@/components/PawMark";
-import { getPublicContest } from "@/lib/public-data";
-import { ArrowRight, Camera, HandCoins, Trophy } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { WaveDivider } from "@/components/WaveDivider";
+import { getApprovedPets, getPublicContest } from "@/lib/public-data";
+import { MOCK_CONTEST } from "@/lib/mock-data";
+import { ArrowRight, Coins, Camera, HeartHandshake } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const contest = await getPublicContest();
+  const [contest, pets] = await Promise.all([
+    getPublicContest(),
+    getApprovedPets(),
+  ]);
+
+  // Fall back to mock contest copy if the DB isn't reachable yet (dev).
+  const c = contest ?? {
+    contestOpen: MOCK_CONTEST.contestOpen,
+    submissionsOpen: MOCK_CONTEST.contestOpen,
+    votingOpen: MOCK_CONTEST.contestOpen,
+    votingDeadline: MOCK_CONTEST.votingDeadline,
+    submissionDeadline: MOCK_CONTEST.submissionDeadline,
+    goalAmountCents: MOCK_CONTEST.goalAmountCents,
+    raisedAmountCents: MOCK_CONTEST.raisedAmountCents,
+  };
+
   return (
     <>
-      <Hero
-        contestOpen={contest.contestOpen}
-        votingDeadline={contest.votingDeadline}
-      />
-      <WaveDivider direction="up" className="text-royal-700 -mt-px" />
+      <Hero contestOpen={c.votingOpen} votingDeadline={c.votingDeadline} />
+      <WaveDivider direction="down" className="text-cream" />
 
-      {/* Goal */}
-      <section className="container -mt-6 md:-mt-12 relative z-10">
+      <section className="container py-16 grid gap-10 md:grid-cols-[1.1fr_1fr] items-start">
         <GoalProgress
-          raisedCents={contest.raisedAmountCents}
-          goalCents={contest.goalAmountCents}
+          raisedCents={c.raisedAmountCents}
+          goalCents={c.goalAmountCents}
         />
-      </section>
-
-      {/* 3-step flow */}
-      <section className="container py-20 md:py-28">
-        <div className="max-w-2xl">
+        <div>
           <p className="eyebrow text-royal-700">How it works</p>
           <h2 className="mt-3 font-display text-4xl md:text-5xl font-black tracking-tight">
-            How it <span className="italic text-ember-500">works</span>.
+            Three steps. <span className="italic text-ember-500">Real dogs.</span>
           </h2>
-          <p className="mt-4 text-ink-muted text-lg">
-            Submitting a pet takes a couple of minutes. Voting takes about ten
-            seconds.
-          </p>
-        </div>
-
-        <ol className="mt-10 grid gap-5 md:grid-cols-3">
-          {[
-            {
-              icon: Camera,
-              n: "01",
-              title: "Submit your pet's photo",
-              body: "Sign in with Google, upload one good shot, and tell us their name.",
-            },
-            {
-              icon: HandCoins,
-              n: "02",
-              title: "Make the $10 entry donation",
-              body: "Powered by Givebutter. It also counts as your pet's first 10 votes.",
-            },
-            {
-              icon: Trophy,
-              n: "03",
-              title: "Get approved → start collecting votes",
-              body: "After admin approval your pet appears publicly. Friends donate to vote.",
-            },
-          ].map(({ icon: Icon, n, title, body }) => (
-            <li key={n} className="ink-card p-6 relative">
-              <span className="stamp absolute -top-4 -left-3 h-12 w-12 rotate-[-6deg] text-sm">
-                {n}
-              </span>
-              <Icon className="h-7 w-7 text-royal-700" />
-              <h3 className="mt-4 font-display text-xl font-black">{title}</h3>
-              <p className="mt-2 text-ink-muted">{body}</p>
-            </li>
-          ))}
-        </ol>
-
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Button asChild variant="ember" size="lg">
-            <Link href="/enter">
-              Enter your pet <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="lg">
-            <Link href="/vote">Browse all pets</Link>
-          </Button>
+          <ol className="mt-6 grid gap-4">
+            {[
+              {
+                icon: Camera,
+                title: "Enter your pet ($10)",
+                body: "Submit a photo and pay the $10 entry donation through Pledge.to. Your pet goes into the review queue.",
+              },
+              {
+                icon: Coins,
+                title: "Public voting",
+                body: "Once approved, anyone can vote for your pet by donating on Pledge.to. $1 = 1 vote.",
+              },
+              {
+                icon: HeartHandshake,
+                title: "Soul Dog Rescue wins",
+                body: "Every dollar — entry donations and votes alike — goes to Soul Dog Rescue.",
+              },
+            ].map((step, i) => (
+              <li
+                key={step.title}
+                className="flex gap-4 rounded-2xl border-2 border-ink bg-white p-4 shadow-card-sm"
+              >
+                <span className="stamp h-12 w-12 shrink-0 text-sm">{i + 1}</span>
+                <div>
+                  <p className="font-display text-lg font-black">{step.title}</p>
+                  <p className="text-ink-muted">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild variant="ember" size="lg">
+              <Link href="/enter">
+                Enter your pet <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg">
+              <Link href="/vote">See the gallery</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
+      <WaveDivider direction="up" className="text-ink" />
+      <section className="bg-ink text-cream">
+        <div className="container py-16 grid gap-8">
+          <div className="flex items-baseline justify-between flex-wrap gap-3">
+            <div>
+              <p className="eyebrow text-ember-300">Current standings</p>
+              <h2 className="mt-2 font-display text-4xl md:text-5xl font-black tracking-tight">
+                Top dogs.
+              </h2>
+            </div>
+            <Button asChild variant="ember" size="lg">
+              <Link href="/vote">Donate to vote</Link>
+            </Button>
+          </div>
+          <Leaderboard pets={pets.slice(0, 5)} />
+        </div>
+      </section>
       <WaveDivider direction="down" className="text-ink" />
 
-      {/* Mission strip */}
-      <section className="bg-ink text-cream">
-        <div className="container py-20 md:py-24 grid md:grid-cols-2 gap-10 items-start">
-          <div>
-            <p className="eyebrow text-ember-300">The mission</p>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl font-black leading-[1.05]">
-              We&apos;re raising{" "}
-              <span className="italic text-ember-300">$500</span> for{" "}
-              <span className="text-white">Soul Dog Rescue</span>.
-            </h2>
-            <p className="mt-5 text-cream/80 text-lg leading-relaxed">
-              Soul Dog Rescue places dogs from overcrowded shelters into loving
-              homes. This fundraiser is part of Liam&apos;s community service
-              project at Mile High Karate.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild variant="ember" size="lg">
-                <Link href="/about">Read the story</Link>
-              </Button>
-              <Button asChild variant="ghost" size="lg" className="bg-cream/95">
-                <Link href="/rules">Rules &amp; FAQ</Link>
-              </Button>
+      <section className="container py-16">
+        <Card>
+          <CardContent className="p-8 grid md:grid-cols-[1fr_auto] items-center gap-6">
+            <div>
+              <p className="eyebrow text-royal-700">100% pass-through</p>
+              <p className="mt-2 font-display text-3xl font-black tracking-tight">
+                Every donation goes to Soul Dog Rescue via Pledge.to.
+              </p>
+              <p className="mt-2 text-ink-muted">
+                Tips and processing fees on Pledge.to don&apos;t count toward votes — only your
+                donation amount does.
+              </p>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { k: "1st place", v: "$100 Chewy Card + Custom Pet Portrait" },
-              { k: "2nd place", v: "Custom Pet Pillow" },
-              { k: "Submissions close", v: "Nov 13, 11:59 PM" },
-              { k: "Voting closes", v: "Nov 13, 11:59 PM" },
-            ].map((s) => (
-              <div
-                key={s.k}
-                className="rounded-2xl border-2 border-cream/20 bg-royal-800/40 p-5 backdrop-blur"
-              >
-                <p className="eyebrow text-ember-300">{s.k}</p>
-                <p className="mt-2 font-display text-xl font-black">{s.v}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="container pb-12 flex items-center gap-3 text-cream/70">
-          <PawMark size={18} className="text-ember-300" />
-          <span className="text-sm">
-            Donations processed by Givebutter. Not refundable.
-          </span>
-        </div>
+            <Button asChild variant="ember" size="lg">
+              <Link href="/about">About the cause</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </section>
     </>
   );

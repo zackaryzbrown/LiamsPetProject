@@ -1,52 +1,67 @@
 "use server";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
+import { buildEntryDonationUrl } from "@/lib/pledge";
 import { PetSubmissionSchema, validateImage } from "@/lib/validation";
 
-export type SubmissionResult =
+export type EnterResult =
   | { ok: true; submissionId: string; donationUrl: string | null }
-  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+  | { ok: false; error: string };
 
-export async function submitPet(formData: FormData): Promise<SubmissionResult> {
-  // 1. Auth
+// =====================================================================
+// Pet entry server action.
+//
+// Flow:
+//   1.  Authenticated user (must be signed in to enter).
+//   2.  Validate the form + image server-side.
+//   3.  Insert the pet_submissions row with status=pending_payment.
+//       The RLS policy `pet_submissions_insert_owner` enforces all
+//       Pledge fields are null at insert time.
+//   4.  Upload the image to the private bucket at
+//       pet-uploads/<user_id>/<submission_id>.<ext>.
+//   5.  Update the row with the resolved image_path (we needed the
+//       generated UUID first).
+//   6.  Build the Pledge.to entry donation URL (tagged with the
+//       submission_id custom field) so the form can redirect.
+// =====================================================================
+export async function enterPet(formData: FormData): Promise<EnterResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "You must be signed in to submit a pet." };
+  if (!user) {
+    return { ok: false, error: "Please sign in before entering your pet." };
+  }
 
-  // 2. Validate text fields
   const parsed = PetSubmissionSchema.safeParse({
     ownerName: formData.get("ownerName"),
     ownerEmail: formData.get("ownerEmail"),
-    ownerPhone: formData.get("ownerPhone") || undefined,
+    ownerPhone: formData.get("ownerPhone") ?? "",
     petName: formData.get("petName"),
-    consentPublic: formData.get("consentPublic"),
-    acknowledgedNonrefundable: formData.get("acknowledgedNonrefundable"),
+    consentPublic: formData.get("consentPublic") ?? "",
+    acknowledgedNonrefundable: formData.get("acknowledgedNonrefundable") ?? "",
   });
   if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = issue.path[0]?.toString();
-      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
-    }
-    return { ok: false, error: "Please fix the highlighted fields.", fieldErrors };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Please complete every field.",
+    };
   }
 
-  // 3. Validate image
-  const photo = formData.get("photo");
-  const imageCheck = validateImage(photo instanceof File ? photo : null);
-  if (!imageCheck.ok) {
-    return { ok: false, error: imageCheck.error, fieldErrors: { photo: imageCheck.error } };
-  }
+  const imageEntry = formData.get("image");
+  const file =
+    imageEntry instanceof File && imageEntry.size > 0 ? imageEntry : null;
+  const imageCheck = validateImage(file);
+  if (!imageCheck.ok) return { ok: false, error: imageCheck.error };
 
-  // 4. Insert pet_submissions row (RLS allows owner to insert with locked
-  //    initial state). We do this BEFORE upload so we can use the row id
-  //    in the storage path.
-  const insert = await supabase
+  // Step 1: insert row with a placeholder image_path so we can capture
+  // the generated UUID. The placeholder "pending" is filtered out
+  // anywhere we read submissions for display.
+  const { data: inserted, error: insertErr } = await supabase
     .from("pet_submissions")
     .insert({
       user_id: user.id,
@@ -54,53 +69,44 @@ export async function submitPet(formData: FormData): Promise<SubmissionResult> {
       owner_email: parsed.data.ownerEmail,
       owner_phone: parsed.data.ownerPhone ?? null,
       pet_name: parsed.data.petName,
-      image_path: "pending", // overwritten after upload
-      consent_public_display: true,
-      acknowledged_nonrefundable: true,
-      status: "pending_payment",
+      image_path: "pending",
+      consent_public_display: parsed.data.consentPublic,
+      acknowledged_nonrefundable: parsed.data.acknowledgedNonrefundable,
     })
     .select("id")
     .single();
-  if (insert.error || !insert.data) {
-    return { ok: false, error: insert.error?.message ?? "Could not save your submission." };
-  }
-  const submissionId = insert.data.id as string;
-
-  // 5. Upload to private bucket via the service-role client (storage
-  //    policies restrict authenticated writes; server validates path).
-  const path = `${user.id}/${submissionId}.${imageCheck.ext}`;
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return { ok: false, error: "Server is not fully configured (missing service role)." };
+  if (insertErr || !inserted) {
+    return { ok: false, error: insertErr?.message ?? "Could not save your submission." };
   }
 
-  const arrayBuffer = await imageCheck.file.arrayBuffer();
-  const upload = await admin.storage
+  // Step 2: upload image with admin client (RLS-free path).
+  const admin = createAdminClient();
+  const objectPath = `${user.id}/${inserted.id}.${imageCheck.ext}`;
+  const buffer = new Uint8Array(await imageCheck.file.arrayBuffer());
+  const up = await admin.storage
     .from(env.SUPABASE_BUCKET_UPLOADS)
-    .upload(path, new Uint8Array(arrayBuffer), {
+    .upload(objectPath, buffer, {
       contentType: imageCheck.file.type,
       upsert: true,
     });
-  if (upload.error) {
-    // Best-effort cleanup so we don't leave orphan rows.
-    await admin.from("pet_submissions").delete().eq("id", submissionId);
-    return { ok: false, error: `Photo upload failed: ${upload.error.message}` };
+  if (up.error) {
+    // Roll back the row so the user can retry cleanly.
+    await admin.from("pet_submissions").delete().eq("id", inserted.id);
+    return { ok: false, error: `Could not upload photo: ${up.error.message}` };
   }
 
-  // 6. Persist final image_path
-  const update = await admin
+  // Step 3: backfill image_path.
+  const { error: updErr } = await admin
     .from("pet_submissions")
-    .update({ image_path: path })
-    .eq("id", submissionId);
-  if (update.error) {
-    return { ok: false, error: "Saved photo but couldn't link it. Contact support." };
+    .update({ image_path: objectPath })
+    .eq("id", inserted.id);
+  if (updErr) {
+    return { ok: false, error: updErr.message };
   }
 
   revalidatePath("/admin/submissions");
 
-  // 7. Build entry-donation URL (returns null if Givebutter not yet configured)
-  const { buildEntryDonationUrl } = await import("@/lib/givebutter");
-  return { ok: true, submissionId, donationUrl: buildEntryDonationUrl(submissionId) };
+  // Step 4: Pledge.to entry donation URL.
+  const donationUrl = buildEntryDonationUrl(inserted.id);
+  return { ok: true, submissionId: inserted.id, donationUrl };
 }

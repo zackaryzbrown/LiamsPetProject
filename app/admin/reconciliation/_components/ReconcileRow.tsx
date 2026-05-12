@@ -1,191 +1,191 @@
 "use client";
 
 import * as React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { dismissWebhookEvent, linkWebhookToPet } from "../actions";
-import { parseTransaction, votesFromAmountCents } from "@/lib/givebutter-parse";
+import {
+  dismissWebhookEvent,
+  linkWebhookToPet,
+  type ReconcileResult,
+} from "@/app/admin/reconciliation/actions";
+import { parsePledgeWebhook } from "@/lib/pledge-parse";
 import { formatCurrency } from "@/lib/utils";
-import { Loader2, Link2, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 type EventRow = {
   id: string;
+  pledgeEventId: string | null;
   eventType: string | null;
-  signatureValid: boolean;
-  receivedAt: string;
-  error: string | null;
-  payload: Record<string, unknown>;
+  signatureVerified: boolean;
+  errorMessage: string | null;
+  createdAt: string;
+  rawPayload: Record<string, unknown>;
 };
 
-type PetOption = { id: string; label: string };
-
-export function ReconcileRow({
-  event,
-  petOptions,
-}: {
+type Props = {
   event: EventRow;
-  petOptions: PetOption[];
-}) {
-  const [pending, start] = React.useTransition();
-  const [msg, setMsg] = React.useState<string | null>(null);
-  const [err, setErr] = React.useState<string | null>(null);
-  const [showRaw, setShowRaw] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  petOptions: { id: string; label: string }[];
+};
 
-  // Re-parse client-side so admins can see what we extracted.
-  const parsed = React.useMemo(() => parseTransaction(event.payload), [event.payload]);
-  const votes = parsed.amountCents != null ? votesFromAmountCents(parsed.amountCents) : null;
+function Status({ result }: { result: ReconcileResult | null }) {
+  if (!result) return null;
+  if (result.ok) {
+    return (
+      <p className="rounded-xl border-2 border-ink bg-cream-100 px-3 py-2 text-xs font-semibold">
+        {result.message ?? "Done."}
+      </p>
+    );
+  }
+  return (
+    <p
+      role="alert"
+      className="rounded-xl border-2 border-ember-500 bg-ember-50 px-3 py-2 text-xs text-ember-700"
+    >
+      {result.error}
+    </p>
+  );
+}
 
-  const filtered = React.useMemo(() => {
-    if (!query.trim()) return petOptions.slice(0, 20);
-    const q = query.toLowerCase();
-    return petOptions.filter((p) => p.label.toLowerCase().includes(q)).slice(0, 20);
-  }, [petOptions, query]);
+// =====================================================================
+// One unmapped webhook row. Shows everything we managed to parse so the
+// admin can confidently pick the right pet — or dismiss the event.
+// =====================================================================
+export function ReconcileRow({ event, petOptions }: Props) {
+  const parsed = React.useMemo(
+    () => parsePledgeWebhook(event.rawPayload),
+    [event.rawPayload],
+  );
+
+  const [linkPending, linkStart] = React.useTransition();
+  const [linkResult, setLinkResult] = React.useState<ReconcileResult | null>(null);
+  const [dismissPending, dismissStart] = React.useTransition();
+  const [dismissResult, setDismissResult] = React.useState<ReconcileResult | null>(null);
+  const [rawOpen, setRawOpen] = React.useState(false);
 
   return (
-    <Card>
-      <CardContent className="p-5 grid gap-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge tone={event.signatureValid ? "royal" : "ember"}>
-                {event.signatureValid ? "Signed" : "Unsigned"}
-              </Badge>
-              {event.eventType && <Badge tone="cream">{event.eventType}</Badge>}
-              <span className="text-xs text-ink-muted">
-                {new Date(event.receivedAt).toLocaleString()}
-              </span>
-            </div>
-            <p className="mt-2 font-display text-lg font-black break-all">
-              {parsed.transactionId ?? <span className="text-ink-muted">(no transaction id)</span>}
-            </p>
-            <dl className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-              <Meta
-                label="Amount"
-                value={parsed.amountCents != null ? formatCurrency(parsed.amountCents) : "-"}
-              />
-              <Meta label="Votes" value={votes != null ? votes.toLocaleString() : "-"} />
-              <Meta label="Donor" value={parsed.donorName ?? "-"} />
-              <Meta label="Email" value={parsed.donorEmail ?? "-"} />
-              <Meta label="Custom field" value={parsed.customSubmissionId ?? "-"} />
-              <Meta label="utm_content" value={parsed.utmContent ?? "-"} />
-              <Meta label="member_id" value={parsed.memberId ?? "-"} />
-              <Meta label="member slug" value={parsed.memberSlug ?? "-"} />
-            </dl>
-            {event.error && (
-              <p className="mt-2 text-xs text-ember-500">Error: {event.error}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowRaw((s) => !s)}
-            className="text-xs underline text-ink-muted inline-flex items-center gap-1"
-          >
-            {showRaw ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            {showRaw ? "Hide raw" : "View raw"}
-          </button>
+    <div className="ink-card overflow-hidden">
+      <header className="p-4 border-b-2 border-ink bg-cream-100 flex flex-wrap items-baseline justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={event.signatureVerified ? "ink" : "ember"}>
+            {event.signatureVerified ? "signature ok" : "unsigned"}
+          </Badge>
+          <Badge tone="cream">{event.eventType ?? "no event type"}</Badge>
+          <span className="font-mono text-xs break-all text-ink-muted">
+            {event.pledgeEventId ?? "no event id"}
+          </span>
         </div>
+        <p className="text-xs text-ink-muted whitespace-nowrap">
+          {new Date(event.createdAt).toLocaleString()}
+        </p>
+      </header>
 
-        {showRaw && (
-          <pre className="text-xs bg-ink text-cream p-3 rounded-xl overflow-x-auto max-h-80">
-            {JSON.stringify(event.payload, null, 2)}
-          </pre>
-        )}
+      <div className="p-5 grid gap-5 md:grid-cols-2">
+        <dl className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
+          <dt className="text-ink-muted">Amount</dt>
+          <dd className="font-semibold tabular-nums">
+            {parsed.amountCents != null ? formatCurrency(parsed.amountCents) : "—"}
+            {parsed.tipCents > 0 && (
+              <span className="ml-2 text-xs text-ink-muted">
+                +{formatCurrency(parsed.tipCents)} tip
+              </span>
+            )}
+          </dd>
+          <dt className="text-ink-muted">Donor</dt>
+          <dd>{parsed.donorName ?? "—"}<div className="text-xs text-ink-muted">{parsed.donorEmail ?? ""}</div></dd>
+          <dt className="text-ink-muted">Transaction id</dt>
+          <dd className="font-mono text-xs break-all">{parsed.transactionId ?? "—"}</dd>
+          <dt className="text-ink-muted">Mapping key</dt>
+          <dd className="font-mono text-xs break-all">{parsed.mappingKey ?? "—"}</dd>
+          <dt className="text-ink-muted">Widget id</dt>
+          <dd className="font-mono text-xs break-all">{parsed.widgetId ?? "—"}</dd>
+          <dt className="text-ink-muted">Campaign id</dt>
+          <dd className="font-mono text-xs break-all">{parsed.campaignId ?? "—"}</dd>
+          <dt className="text-ink-muted">Fundraiser id</dt>
+          <dd className="font-mono text-xs break-all">{parsed.fundraiserId ?? "—"}</dd>
+          <dt className="text-ink-muted">submission_id field</dt>
+          <dd className="font-mono text-xs break-all">{parsed.customSubmissionId ?? "—"}</dd>
+          <dt className="text-ink-muted">utm_content</dt>
+          <dd className="font-mono text-xs break-all">{parsed.utmContent ?? "—"}</dd>
+          {event.errorMessage && (
+            <>
+              <dt className="text-ink-muted">Last error</dt>
+              <dd className="text-ember-700">{event.errorMessage}</dd>
+            </>
+          )}
+        </dl>
 
-        <div className="grid gap-3 md:grid-cols-2 pt-3 border-t-2 border-ink/10">
+        <div className="grid gap-4">
           <form
-            action={(fd) =>
-              start(async () => {
-                setMsg(null);
-                setErr(null);
-                fd.set("rawEventId", event.id);
-                const r = await linkWebhookToPet(fd);
-                if (r.ok) setMsg(r.message);
-                else setErr(r.error);
-              })
-            }
-            className="grid gap-2 p-4 rounded-xl border-2 border-dashed border-ink/30 bg-cream-100"
+            className="grid gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              fd.set("eventRowId", event.id);
+              linkStart(async () => setLinkResult(await linkWebhookToPet(fd)));
+            }}
           >
-            <p className="eyebrow text-royal-700">Link to pet</p>
-            <Label htmlFor={`search-${event.id}`}>Search by pet, owner, or email</Label>
-            <Input
-              id={`search-${event.id}`}
-              type="search"
-              placeholder="Type to filter…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <Label htmlFor={`pet-${event.id}`}>Pet</Label>
+            <Label htmlFor={`pet-${event.id}`}>Link to pet</Label>
             <select
               id={`pet-${event.id}`}
               name="petSubmissionId"
               required
-              className="h-12 w-full rounded-xl border-2 border-ink bg-white px-4 text-base"
+              defaultValue=""
+              className="h-12 w-full rounded-xl border-2 border-ink bg-white px-3 text-sm"
             >
-              <option value="">Select a pet…</option>
-              {filtered.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
+              <option value="" disabled>
+                Choose a pet…
+              </option>
+              {petOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
                 </option>
               ))}
             </select>
-            <Button type="submit" variant="ember" disabled={pending}>
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-              Link & record
+            <Button type="submit" variant="ember" size="sm" disabled={linkPending}>
+              {linkPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Link & apply votes
             </Button>
+            <Status result={linkResult} />
           </form>
 
           <form
-            action={(fd) =>
-              start(async () => {
-                setMsg(null);
-                setErr(null);
-                fd.set("rawEventId", event.id);
-                const r = await dismissWebhookEvent(fd);
-                if (r.ok) setMsg(r.message);
-                else setErr(r.error);
-              })
-            }
-            className="grid gap-2 p-4 rounded-xl border-2 border-dashed border-ink/30 bg-cream-100"
+            className="grid gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              fd.set("eventRowId", event.id);
+              dismissStart(async () => setDismissResult(await dismissWebhookEvent(fd)));
+            }}
           >
-            <p className="eyebrow text-ember-500">Dismiss</p>
-            <Label htmlFor={`dismiss-${event.id}`}>Reason</Label>
+            <Label htmlFor={`reason-${event.id}`}>Dismiss reason</Label>
             <Input
-              id={`dismiss-${event.id}`}
+              id={`reason-${event.id}`}
               name="reason"
               required
-              placeholder="e.g. test fire / refund / not for this contest"
+              maxLength={500}
+              placeholder="Test data / duplicate / refund / etc."
             />
-            <Button
-              type="submit"
-              variant="ghost"
-              disabled={pending}
-              className="border-ember-500 text-ember-500 hover:bg-ember-50"
-            >
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              Dismiss event
+            <Button type="submit" variant="ghost" size="sm" disabled={dismissPending}>
+              {dismissPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Dismiss
             </Button>
+            <Status result={dismissResult} />
           </form>
         </div>
+      </div>
 
-        {(msg || err) && (
-          <p className={err ? "text-sm text-ember-500" : "text-sm text-royal-700"}>
-            {err ?? msg}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col min-w-0">
-      <dt className="text-[10px] uppercase tracking-widest text-ink-muted">{label}</dt>
-      <dd className="truncate">{value}</dd>
+      <details
+        className="border-t-2 border-ink bg-cream-100"
+        open={rawOpen}
+        onToggle={(e) => setRawOpen((e.target as HTMLDetailsElement).open)}
+      >
+        <summary className="cursor-pointer px-5 py-3 text-xs font-semibold uppercase tracking-wider">
+          Raw payload
+        </summary>
+        <pre className="px-5 pb-5 text-xs whitespace-pre-wrap break-all">
+          {JSON.stringify(event.rawPayload, null, 2)}
+        </pre>
+      </details>
     </div>
   );
 }

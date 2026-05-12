@@ -1,114 +1,107 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Card, CardContent } from "@/components/ui/card";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeaderboardPage() {
+export default async function AdminLeaderboardPage() {
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("pet_leaderboard")
-    .select("id, pet_name, owner_name, total_votes, total_amount_cents, approved_at, givebutter_member_url");
+  const { data: pets } = await admin
+    .from("pet_submissions")
+    .select(
+      "id, pet_name, owner_name, total_votes, manual_vote_adjustment, total_donated_cents, pledge_donation_url",
+    )
+    .eq("status", "approved")
+    .order("total_votes", { ascending: false })
+    .limit(500);
 
-  // The view doesn't sort by votes; sort here so admins can spot drift.
-  const rows = [...(data ?? [])].sort(
-    (a, b) => ((b.total_votes as number) ?? 0) - ((a.total_votes as number) ?? 0),
-  );
-
-  const totals = rows.reduce(
-    (acc, r) => ({
-      votes: acc.votes + ((r.total_votes as number) ?? 0),
-      cents: acc.cents + ((r.total_amount_cents as number) ?? 0),
-    }),
-    { votes: 0, cents: 0 },
+  const totalVotes = (pets ?? []).reduce((s, p) => s + (p.total_votes ?? 0), 0);
+  const totalRaised = (pets ?? []).reduce(
+    (s, p) => s + (p.total_donated_cents ?? 0),
+    0,
   );
 
   return (
     <div className="grid gap-6">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
+      <header className="flex items-baseline justify-between flex-wrap gap-3">
         <div>
-          <p className="eyebrow text-royal-700">Leaderboard</p>
-          <h1 className="font-display text-4xl font-black">Vote totals</h1>
-          <p className="text-ink-muted mt-1">
-            Computed from <code>vote_transactions</code>. Use the per-pet page to record manual
-            adjustments if Givebutter sync fails.
+          <h1 className="font-display text-3xl font-black tracking-tight">Leaderboard</h1>
+          <p className="text-ink-muted">
+            Approved pets ranked by total votes. Updated by the Pledge.to webhook in real time.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge tone="royal">{totals.votes.toLocaleString()} votes</Badge>
-          <Badge tone="ember">{formatCurrency(totals.cents)} raised</Badge>
+        <div className="flex gap-2">
+          <Badge tone="cream">{formatNumber(totalVotes)} votes</Badge>
+          <Badge tone="ink">{formatCurrency(totalRaised)} raised</Badge>
         </div>
-      </div>
+      </header>
 
-      {error && (
-        <Card>
-          <CardContent className="p-6 text-ember-500">
-            Failed to load leaderboard: {error.message}
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-ink-muted bg-cream-100 border-b-2 border-ink">
-              <tr>
-                <th className="px-4 py-3 font-semibold">#</th>
-                <th className="px-4 py-3 font-semibold">Pet</th>
-                <th className="px-4 py-3 font-semibold">Owner</th>
-                <th className="px-4 py-3 font-semibold text-right">Votes</th>
-                <th className="px-4 py-3 font-semibold text-right">Raised</th>
-                <th className="px-4 py-3 font-semibold">Givebutter</th>
-                <th className="px-4 py-3" />
+      <div className="ink-card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-cream-100 border-b-2 border-ink">
+            <tr className="text-left">
+              <th className="px-4 py-3 w-12">#</th>
+              <th className="px-4 py-3">Pet</th>
+              <th className="px-4 py-3">Owner</th>
+              <th className="px-4 py-3 text-right">Votes</th>
+              <th className="px-4 py-3 text-right">Manual</th>
+              <th className="px-4 py-3 text-right">Raised</th>
+              <th className="px-4 py-3">Donation URL</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y-2 divide-ink/10">
+            {(pets ?? []).map((p, i) => (
+              <tr key={p.id}>
+                <td className="px-4 py-3 font-display font-black tabular-nums">{i + 1}</td>
+                <td className="px-4 py-3 font-semibold">{p.pet_name}</td>
+                <td className="px-4 py-3">{p.owner_name}</td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {formatNumber(p.total_votes)}
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {p.manual_vote_adjustment >= 0 ? "+" : ""}
+                  {p.manual_vote_adjustment}
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {formatCurrency(p.total_donated_cents)}
+                </td>
+                <td className="px-4 py-3 max-w-xs truncate">
+                  {p.pledge_donation_url ? (
+                    <a
+                      href={p.pledge_donation_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-royal-700"
+                    >
+                      {p.pledge_donation_url}
+                    </a>
+                  ) : (
+                    <span className="text-ink-muted">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/admin/submissions/${p.id}`}>
+                      Open <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={r.id as string} className="border-b border-ink/10">
-                  <td className="px-4 py-3 font-display font-black">{i + 1}</td>
-                  <td className="px-4 py-3 font-semibold">{r.pet_name as string}</td>
-                  <td className="px-4 py-3 text-ink-muted">{r.owner_name as string}</td>
-                  <td className="px-4 py-3 text-right font-mono">
-                    {((r.total_votes as number) ?? 0).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono">
-                    {formatCurrency((r.total_amount_cents as number) ?? 0)}
-                  </td>
-                  <td className="px-4 py-3">
-                    {r.givebutter_member_url ? (
-                      <a
-                        href={r.givebutter_member_url as string}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline text-royal-700"
-                      >
-                        Open
-                      </a>
-                    ) : (
-                      <span className="text-ink-muted">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={`/admin/submissions/${r.id}`}>Edit</Link>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-              {rows.length === 0 && (
-                <tr>
-                  <td className="px-4 py-8 text-center text-ink-muted" colSpan={7}>
-                    No approved pets yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+            ))}
+            {(!pets || pets.length === 0) && (
+              <tr>
+                <td colSpan={8} className="px-4 py-8 text-center text-ink-muted">
+                  No approved pets yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -33,7 +33,7 @@ export const env = {
   get NEXT_PUBLIC_SITE_URL() {
     return (
       process.env.NEXT_PUBLIC_SITE_URL ??
-      "https://liams-pet-project-zacksbrodevs-projects.vercel.app"
+      "https://main.derbbj6vexl0w.amplifyapp.com"
     );
   },
   get NEXT_PUBLIC_CONTACT_EMAIL() {
@@ -54,17 +54,53 @@ export const env = {
     return adminEmails();
   },
 
-  // Givebutter - optional during early phases; checked when used.
-  get GIVEBUTTER_ENTRY_CHECKOUT_URL() {
-    return optional("GIVEBUTTER_ENTRY_CHECKOUT_URL");
+  // -------------------------------------------------------------------
+  // Pledge.to — the ONLY donation platform for this project.
+  //
+  // PLEDGE_API_KEY:               server-only API key for outbound calls.
+  // PLEDGE_WEBHOOK_SECRET:        HMAC-SHA256 secret used to verify
+  //                               inbound webhooks. Falls back to the
+  //                               API key when not configured — confirm
+  //                               with your Pledge dashboard whether the
+  //                               platform sends a separate signing
+  //                               secret or signs with the API key.
+  // PLEDGE_API_BASE_URL:          production REST base.
+  // PLEDGE_SANDBOX_API_BASE_URL:  sandbox base used for dev/test.
+  // PLEDGE_DEFAULT_DONATION_URL:  fallback hosted-checkout URL for the
+  //                               $10 entry donation when a per-pet URL
+  //                               has not been configured yet.
+  // PLEDGE_DEFAULT_WIDGET_ID /
+  // PLEDGE_DEFAULT_CAMPAIGN_ID:   defaults when admin has not assigned
+  //                               per-pet values.
+  // PLEDGE_SUBMISSION_FIELD_KEY:  query-param / custom-field key we
+  //                               append to the donation URL so the
+  //                               webhook can map a donation back to
+  //                               the pet.
+  // -------------------------------------------------------------------
+  get PLEDGE_API_KEY() {
+    return optional("PLEDGE_API_KEY");
   },
-  get GIVEBUTTER_SUBMISSION_FIELD_KEY() {
-    return process.env.GIVEBUTTER_SUBMISSION_FIELD_KEY ?? "submission_id";
+  get PLEDGE_WEBHOOK_SECRET() {
+    return optional("PLEDGE_WEBHOOK_SECRET") ?? optional("PLEDGE_API_KEY");
   },
-  get GIVEBUTTER_WEBHOOK_SECRET() {
-    return optional("GIVEBUTTER_WEBHOOK_SECRET");
+  get PLEDGE_API_BASE_URL() {
+    return process.env.PLEDGE_API_BASE_URL ?? "https://api.pledge.to/v1";
   },
-  get GIVEBUTTER_API_KEY() {
-    return optional("GIVEBUTTER_API_KEY");
+  get PLEDGE_SANDBOX_API_BASE_URL() {
+    return (
+      process.env.PLEDGE_SANDBOX_API_BASE_URL ?? "https://api.sandbox.pledge.to/v1"
+    );
+  },
+  get PLEDGE_DEFAULT_DONATION_URL() {
+    return optional("PLEDGE_DEFAULT_DONATION_URL");
+  },
+  get PLEDGE_DEFAULT_WIDGET_ID() {
+    return optional("PLEDGE_DEFAULT_WIDGET_ID");
+  },
+  get PLEDGE_DEFAULT_CAMPAIGN_ID() {
+    return optional("PLEDGE_DEFAULT_CAMPAIGN_ID");
+  },
+  get PLEDGE_SUBMISSION_FIELD_KEY() {
+    return process.env.PLEDGE_SUBMISSION_FIELD_KEY ?? "submission_id";
   },
 };
