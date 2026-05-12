@@ -20,9 +20,14 @@ const NAV = [
 export function Navbar({
   isAdmin = false,
   isSignedIn = false,
+  donateUrl = null,
 }: {
   isAdmin?: boolean;
   isSignedIn?: boolean;
+  // Default Pledge.to fundraiser URL for the contest. When set, the
+  // Donate button opens it in a new tab. Otherwise it falls back to
+  // /vote so the user can pick a specific pet.
+  donateUrl?: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
@@ -88,7 +93,13 @@ export function Navbar({
             </Button>
           )}
           <Button asChild variant="ember" size="sm">
-            <Link href="/vote">Donate</Link>
+            {donateUrl ? (
+              <a href={donateUrl} target="_blank" rel="noopener noreferrer">
+                Donate
+              </a>
+            ) : (
+              <Link href="/vote">Donate</Link>
+            )}
           </Button>
         </div>
 
@@ -120,9 +131,20 @@ export function Navbar({
               </Link>
             ))}
             <Button asChild variant="ember" size="lg" className="mt-1">
-              <Link href="/vote" onClick={() => setOpen(false)}>
-                Donate
-              </Link>
+              {donateUrl ? (
+                <a
+                  href={donateUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                >
+                  Donate
+                </a>
+              ) : (
+                <Link href="/vote" onClick={() => setOpen(false)}>
+                  Donate
+                </Link>
+              )}
             </Button>
             <Button asChild variant="ghost" size="lg">
               <Link href="/enter" onClick={() => setOpen(false)}>
