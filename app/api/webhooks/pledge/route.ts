@@ -126,23 +126,29 @@ export async function POST(request: Request) {
     mapError = err instanceof Error ? err.message : String(err);
   }
 
-  // ---- Decide entry vs vote based on pet's current status ------------
-  // Pledge sends `donation.completed` for every donation, so the event
-  // type alone can't tell us whether this is the entry fee or a vote.
-  // The pet's prior status is the authoritative signal: a pet still
-  // in `pending_payment` is collecting its entry donation; anything
-  // after that (status = pending_review / approved) is a vote donation.
-  let petStatusBefore: string | null = null;
+  // ---- Decide entry vs vote --------------------------------------------
+  // RULE: the very first donation to a pet is the entry donation and
+  // earns ZERO votes. Every donation after that is a vote donation
+  // ($1 = 1 vote). We discriminate using `entry_donation_confirmed`
+  // (NOT status) because:
+  //   - Pledge sends `donation.completed` for everything, so the event
+  //     type itself can't tell us.
+  //   - Status-based checks (was the pet pending_payment when the
+  //     donation arrived?) break when the webhook arrives AFTER the
+  //     admin has already approved the pet (e.g. a retried/replayed
+  //     delivery, or a slow webhook). The flag is order-independent.
+  let entryAlreadyConfirmed: boolean | null = null;
   if (petSubmissionId) {
     const { data: petRow } = await admin
       .from("pet_submissions")
-      .select("status")
+      .select("entry_donation_confirmed")
       .eq("id", petSubmissionId)
       .maybeSingle();
-    petStatusBefore = (petRow?.status as string | null) ?? null;
+    entryAlreadyConfirmed = (petRow?.entry_donation_confirmed as boolean | null) ?? null;
   }
+  // First donation to this pet = entry. Subsequent donations = votes.
   const isEntryDonation =
-    petSubmissionId !== null && petStatusBefore === "pending_payment";
+    petSubmissionId !== null && entryAlreadyConfirmed === false;
   const donationType: "entry" | "vote" | "general" | "unknown" = isEntryDonation
     ? "entry"
     : classifyDonationType(parsed.eventType, petSubmissionId !== null);
@@ -231,11 +237,10 @@ export async function POST(request: Request) {
   }
 
   // ---- Apply vote increment to pet -----------------------------------
-  // Entry donations: the first $10 is the entry fee and earns no votes;
-  // the overage (if any) is credited as votes. The full donation amount
-  // (including the $10 fee) still counts toward "raised" because it all
-  // goes to Soul Dog Rescue.
-  // Non-entry donations: $1 = 1 vote, full amount counted in raised.
+  // Entry donations earn ZERO votes regardless of amount. Submitting a
+  // pet is not voting for a pet. The full amount still counts toward
+  // "raised" because the money really does go to Soul Dog Rescue.
+  // Non-entry donations: $1 = 1 vote.
   if (petSubmissionId && parsed.amountCents > 0) {
     await admin.rpc("increment_pet_votes", {
       p_pet_id: petSubmissionId,
@@ -246,14 +251,25 @@ export async function POST(request: Request) {
 
   // ---- Entry-donation status transition -------------------------------
   // Flip pending_payment → pending_review so admins can review the photo.
+  // ---- Entry-donation transition -------------------------------------
+  // First donation to this pet:
+  //   - always flip entry_donation_confirmed=true (so any future
+  //     donation correctly counts as a vote)
+  //   - if the pet is still pending_payment, move it to pending_review
+  //     so admins can review the photo. If the pet was already approved
+  //     (e.g. admin approved before this webhook arrived), leave the
+  //     status alone.
   if (isEntryDonation && petSubmissionId) {
     await admin
       .from("pet_submissions")
       .update({
         entry_donation_confirmed: true,
-        status: "pending_review",
         entry_pledge_transaction_id: parsed.transactionId ?? eventIdForDb,
       })
+      .eq("id", petSubmissionId);
+    await admin
+      .from("pet_submissions")
+      .update({ status: "pending_review" })
       .eq("id", petSubmissionId)
       .eq("status", "pending_payment");
   }
