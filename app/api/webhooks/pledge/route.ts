@@ -63,6 +63,16 @@ export async function POST(request: Request) {
 
   // Refuse unsigned requests when a secret is configured.
   if (env.PLEDGE_WEBHOOK_SECRET && !signatureVerified) {
+    // Non-secret fingerprint of the secret currently in use, so we can
+    // verify (without leaking the value) that the running Lambda has the
+    // expected secret baked in. Pledge signs with HMAC-SHA256(api_key,
+    // body) → base64; if the fingerprint here doesn't match the first 8
+    // chars of what we'd expect, the wrong secret is live.
+    const secret = env.PLEDGE_WEBHOOK_SECRET ?? "";
+    const secretFingerprint =
+      secret.length >= 4
+        ? `${secret.slice(0, 4)}…${secret.slice(-2)} (len ${secret.length})`
+        : `len ${secret.length}`;
     try {
       const admin = createAdminClient();
       await admin.from("pledge_webhook_events").insert({
@@ -70,7 +80,7 @@ export async function POST(request: Request) {
         event_type: typeof payload.event === "string" ? payload.event : null,
         signature_verified: false,
         processing_status: "failed",
-        error_message: "Invalid signature",
+        error_message: `Invalid signature (secret fingerprint: ${secretFingerprint})`,
         raw_payload: payload as never,
         raw_headers: headerSnapshot as never,
       });
@@ -78,7 +88,12 @@ export async function POST(request: Request) {
       // best-effort logging; we still return 401.
     }
     return NextResponse.json(
-      { ok: false, error: "Invalid signature" },
+      {
+        ok: false,
+        error: "Invalid signature",
+        secretFingerprint,
+        signatureReceived: signature ? `${signature.slice(0, 8)}…` : null,
+      },
       { status: 401 },
     );
   }
