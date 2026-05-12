@@ -1,0 +1,25 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci --include=dev
+    build:
+      commands:
+        # =============================================================
+        # Bake Amplify console env vars into .env.production so they're
+        # available to Next.js at SSR runtime (Lambda), not just at
+        # build time. Without this, process.env.NEXT_PUBLIC_SUPABASE_URL
+        # (and friends) are undefined inside server components and
+        # server actions on deploy.
+        # =============================================================
+        - env | grep -E "^(NEXT_PUBLIC_|SUPABASE_|ADMIN_EMAILS|PLEDGE_)" >> .env.production
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
