@@ -111,7 +111,26 @@ export async function POST(request: Request) {
     mapError = err instanceof Error ? err.message : String(err);
   }
 
-  const donationType = classifyDonationType(parsed.eventType, petSubmissionId !== null);
+  // ---- Decide entry vs vote based on pet's current status ------------
+  // Pledge sends `donation.completed` for every donation, so the event
+  // type alone can't tell us whether this is the entry fee or a vote.
+  // The pet's prior status is the authoritative signal: a pet still
+  // in `pending_payment` is collecting its entry donation; anything
+  // after that (status = pending_review / approved) is a vote donation.
+  let petStatusBefore: string | null = null;
+  if (petSubmissionId) {
+    const { data: petRow } = await admin
+      .from("pet_submissions")
+      .select("status")
+      .eq("id", petSubmissionId)
+      .maybeSingle();
+    petStatusBefore = (petRow?.status as string | null) ?? null;
+  }
+  const isEntryDonation =
+    petSubmissionId !== null && petStatusBefore === "pending_payment";
+  const donationType: "entry" | "vote" | "general" | "unknown" = isEntryDonation
+    ? "entry"
+    : classifyDonationType(parsed.eventType, petSubmissionId !== null);
 
   // ---- Refuse to process if we can't even identify the donation ------
   if (!parsed.eventId && !parsed.transactionId) {
@@ -191,7 +210,9 @@ export async function POST(request: Request) {
   }
 
   // ---- Apply vote increment to pet -----------------------------------
-  if (petSubmissionId && voteCredits > 0) {
+  // Entry donations cover the $10 entry fee — they don't earn votes.
+  // Everything else is $1 = 1 vote.
+  if (petSubmissionId && voteCredits > 0 && !isEntryDonation) {
     await admin.rpc("increment_pet_votes", {
       p_pet_id: petSubmissionId,
       p_votes: voteCredits,
@@ -200,7 +221,8 @@ export async function POST(request: Request) {
   }
 
   // ---- Entry-donation status transition -------------------------------
-  if (donationType === "entry" && petSubmissionId) {
+  // Flip pending_payment → pending_review so admins can review the photo.
+  if (isEntryDonation && petSubmissionId) {
     await admin
       .from("pet_submissions")
       .update({
