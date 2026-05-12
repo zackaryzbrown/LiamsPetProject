@@ -39,7 +39,9 @@ export async function enterPet(formData: FormData): Promise<EnterResult> {
 
   const parsed = PetSubmissionSchema.safeParse({
     ownerName: formData.get("ownerName"),
-    ownerEmail: formData.get("ownerEmail"),
+    // Trust the auth session, not the form field. The client locks the
+    // email input to user.email, but enforce server-side too.
+    ownerEmail: user.email,
     ownerPhone: formData.get("ownerPhone") ?? "",
     petName: formData.get("petName"),
     consentPublic: formData.get("consentPublic") ?? "",

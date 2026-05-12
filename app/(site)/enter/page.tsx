@@ -41,7 +41,7 @@ export default async function EnterPage() {
           <Card>
             <CardContent className="p-6 md:p-8">
               {submissionsOpen ? (
-                <EnterPetForm action={enterPet} />
+                <EnterPetForm action={enterPet} accountEmail={user.email ?? ""} />
               ) : (
                 <div className="grid gap-4 text-center py-8">
                   <p className="font-display text-2xl font-black">

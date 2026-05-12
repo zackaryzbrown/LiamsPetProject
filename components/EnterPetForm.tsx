@@ -16,6 +16,10 @@ type Props = {
   // pre-built Pledge.to entry donation URL. The form receives the URL
   // and redirects the donor straight to Pledge.to.
   action: (formData: FormData) => Promise<SubmitResult>;
+  // Signed-in account email. Locked into the form so the entry
+  // donation always credits back to the right wallet — the donor email
+  // on Pledge.to MUST match this, otherwise the webhook can't match.
+  accountEmail: string;
 };
 
 // =====================================================================
@@ -24,7 +28,7 @@ type Props = {
 // donation. The webhook flips status to pending_review and an admin
 // approves the photo before the pet appears publicly.
 // =====================================================================
-export function EnterPetForm({ action }: Props) {
+export function EnterPetForm({ action, accountEmail }: Props) {
   const router = useRouter();
   const [pending, start] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
@@ -65,10 +69,16 @@ export function EnterPetForm({ action }: Props) {
             id="ownerEmail"
             name="ownerEmail"
             type="email"
-            required
-            maxLength={254}
-            placeholder="jane@example.com"
+            value={accountEmail}
+            readOnly
+            aria-readonly
+            tabIndex={-1}
+            className="bg-cream-100 cursor-not-allowed"
           />
+          <p className="text-xs text-ink-muted">
+            We use your account email so your entry donation credits
+            back to your wallet. Use this same email on Pledge.to.
+          </p>
         </div>
       </div>
 

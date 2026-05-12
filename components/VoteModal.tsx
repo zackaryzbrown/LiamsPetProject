@@ -254,25 +254,39 @@ export function VoteModal({
               </>
             ) : donationUrl ? (
               <>
-                <div className="grid gap-2">
-                  <Label htmlFor="voterEmail">
-                    Email you&apos;ll use on Pledge.to
-                  </Label>
-                  <Input
-                    id="voterEmail"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    disabled={pending}
-                  />
-                  <p className="text-xs text-ink-muted">
-                    We use this to match your donation back to {pet.petName}.
-                    Use the same email when checking out on Pledge.to.
-                  </p>
-                </div>
+                {userEmail ? (
+                  <div className="grid gap-2">
+                    <Label>Email on Pledge.to</Label>
+                    <div className="rounded-xl border-2 border-ink bg-cream-100 px-3 py-2 text-sm font-semibold">
+                      {userEmail}
+                    </div>
+                    <p className="text-xs text-ink-muted">
+                      Use this exact email when checking out on Pledge.to
+                      so we can credit your account.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <Label htmlFor="voterEmail">
+                      Email you&apos;ll use on Pledge.to
+                    </Label>
+                    <Input
+                      id="voterEmail"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      disabled={pending}
+                    />
+                    <p className="text-xs text-ink-muted">
+                      We use this to match your donation back to{" "}
+                      {pet.petName}. Use the same email when checking out
+                      on Pledge.to.
+                    </p>
+                  </div>
+                )}
                 {error && (
                   <p
                     role="alert"

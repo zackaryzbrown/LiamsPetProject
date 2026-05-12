@@ -316,10 +316,61 @@ export async function POST(request: Request) {
   // pet is not voting for a pet. The full amount still counts toward
   // "raised" because the money really does go to Soul Dog Rescue.
   // Non-entry donations: $1 = 1 vote.
-  if (petSubmissionId && parsed.amountCents > 0) {
+  //
+  // For account-holders we route the vote through the ledger as a
+  // "deposit + auto-spend" pair so the donation is recorded against
+  // their wallet (auditable, refundable to other pets if we ever
+  // needed to). Net effect on the pet is identical to a direct vote.
+  // Truly anonymous donors (donor_email doesn't match any account)
+  // skip the ledger and get a direct vote increment so the per-pet
+  // share link still works for guests.
+  if (!isEntryDonation && petSubmissionId && parsed.amountCents > 0) {
+    let voterUserId: string | null = intentUserId;
+    if (!voterUserId && parsed.donorEmail) {
+      const { data: userIdData } = await admin.rpc("find_user_id_by_email", {
+        p_email: parsed.donorEmail,
+      });
+      voterUserId = typeof userIdData === "string" ? userIdData : null;
+    }
+
+    if (voterUserId && donationRow?.id) {
+      // Deposit the donation into the donor's wallet…
+      await admin.from("vote_credit_ledger").insert({
+        user_id: voterUserId,
+        delta_cents: parsed.amountCents,
+        source_donation_id: donationRow.id,
+        reason: "donation_vote",
+      });
+      // …then immediately spend it on the originating pet.
+      await admin.from("vote_credit_ledger").insert({
+        user_id: voterUserId,
+        delta_cents: -parsed.amountCents,
+        source_donation_id: donationRow.id,
+        pet_submission_id: petSubmissionId,
+        reason: "auto_spend",
+      });
+      // Bump pet vote count + raised total directly. We don't call
+      // spend_vote_credits here because we just inserted the ledger
+      // rows ourselves and want to count the raised cents exactly
+      // once (the donation row already represents the raise).
+      await admin.rpc("increment_pet_votes", {
+        p_pet_id: petSubmissionId,
+        p_votes: voteCredits,
+        p_cents: parsed.amountCents,
+      });
+    } else {
+      // Anonymous donor — direct vote, no wallet involvement.
+      await admin.rpc("increment_pet_votes", {
+        p_pet_id: petSubmissionId,
+        p_votes: voteCredits,
+        p_cents: parsed.amountCents,
+      });
+    }
+  } else if (isEntryDonation && petSubmissionId && parsed.amountCents > 0) {
+    // Entry donations still need to bump "raised" (0 votes).
     await admin.rpc("increment_pet_votes", {
       p_pet_id: petSubmissionId,
-      p_votes: voteCredits,
+      p_votes: 0,
       p_cents: parsed.amountCents,
     });
   }
