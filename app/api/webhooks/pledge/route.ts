@@ -167,7 +167,13 @@ export async function POST(request: Request) {
 
   // ---- Insert pledge_donations (idempotent) ---------------------------
   const eventIdForDb = parsed.eventId ?? parsed.transactionId ?? crypto.randomUUID();
-  const voteCredits = votesFromAmountCents(parsed.amountCents);
+  // Entry donations: the first $10 covers the entry fee; everything over
+  // $10 counts as votes for the pet. Non-entry donations: $1 = 1 vote.
+  const ENTRY_FEE_CENTS = 1000;
+  const voteEligibleCents = isEntryDonation
+    ? Math.max(0, parsed.amountCents - ENTRY_FEE_CENTS)
+    : parsed.amountCents;
+  const voteCredits = votesFromAmountCents(voteEligibleCents);
 
   const { data: donationRow, error: donationErr } = await admin
     .from("pledge_donations")
@@ -210,9 +216,12 @@ export async function POST(request: Request) {
   }
 
   // ---- Apply vote increment to pet -----------------------------------
-  // Entry donations cover the $10 entry fee — they don't earn votes.
-  // Everything else is $1 = 1 vote.
-  if (petSubmissionId && voteCredits > 0 && !isEntryDonation) {
+  // Entry donations: the first $10 is the entry fee and earns no votes;
+  // the overage (if any) is credited as votes. The full donation amount
+  // (including the $10 fee) still counts toward "raised" because it all
+  // goes to Soul Dog Rescue.
+  // Non-entry donations: $1 = 1 vote, full amount counted in raised.
+  if (petSubmissionId && parsed.amountCents > 0) {
     await admin.rpc("increment_pet_votes", {
       p_pet_id: petSubmissionId,
       p_votes: voteCredits,
