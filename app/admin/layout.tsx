@@ -2,13 +2,14 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { signOut } from "@/app/auth/actions";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Inbox, Trophy, Settings, LogOut, ShieldCheck, GitMerge, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Inbox, Trophy, Settings, LogOut, ShieldCheck, GitMerge, ExternalLink, HeartHandshake } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const NAV: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/submissions", label: "Submissions", icon: Inbox },
+  { href: "/admin/donations", label: "Donations", icon: HeartHandshake },
   { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/admin/reconciliation", label: "Reconciliation", icon: GitMerge },
   { href: "/admin/settings", label: "Settings", icon: Settings },
