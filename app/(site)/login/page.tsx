@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PawMark } from "@/components/PawMark";
 import { EmailSignInForm } from "./EmailSignInForm";
+import { sanitizeNextPath } from "@/lib/safe-next";
 
 export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
@@ -24,9 +25,9 @@ export default async function LoginPage({
   const sp = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirect(sp.next ?? "/");
+  const next = sanitizeNextPath(sp.next, "/enter");
+  if (user) redirect(next);
 
-  const next = sp.next ?? "/enter";
   const error = sp.error ? (ERROR_MESSAGES[sp.error] ?? sp.error) : null;
 
   return (
@@ -63,7 +64,7 @@ export default async function LoginPage({
           <EmailSignInForm next={next} />
 
           <p className="text-xs text-ink-muted text-center">
-            By continuing, you agree to display your pet's photo publicly if approved.{" "}
+            By continuing, you agree to display your pet&apos;s photo publicly if approved.{" "}
             <Link href="/rules" className="underline">
               Read the rules
             </Link>

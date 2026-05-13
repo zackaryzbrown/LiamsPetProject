@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeNextPath } from "@/lib/safe-next";
 
 // Derive the absolute URL of THIS request so OAuth redirects come back to
 // the same domain the user is on.
@@ -29,8 +30,9 @@ async function getRequestOrigin(): Promise<string> {
 export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
   const origin = await getRequestOrigin();
+  const safeNext = sanitizeNextPath(next, "/");
   const redirectTo = new URL("/auth/callback", origin);
-  if (next) redirectTo.searchParams.set("next", next);
+  redirectTo.searchParams.set("next", safeNext);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -65,7 +67,7 @@ export async function signInWithEmail(
     .toString()
     .trim()
     .toLowerCase();
-  const next = (formData.get("next") ?? "/").toString();
+  const next = sanitizeNextPath((formData.get("next") ?? "/").toString(), "/");
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
     return { ok: false, error: "Enter a valid email address." };
@@ -74,7 +76,7 @@ export async function signInWithEmail(
   const supabase = await createClient();
   const origin = await getRequestOrigin();
   const redirectTo = new URL("/auth/callback", origin);
-  if (next) redirectTo.searchParams.set("next", next);
+  redirectTo.searchParams.set("next", next);
 
   const { error } = await supabase.auth.signInWithOtp({
     email: rawEmail,
