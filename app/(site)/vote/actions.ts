@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getContestWindowSettings, votingOpenNow } from "@/lib/contest-state";
 
 // =====================================================================
 // recordVoteIntent
@@ -30,6 +31,11 @@ export async function recordVoteIntent(
   const parsed = InputSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: "Invalid request." };
+  }
+
+  const contest = await getContestWindowSettings();
+  if (!contest || !votingOpenNow(contest)) {
+    return { ok: false, error: "Voting is currently closed." };
   }
 
   // Prefer the email of the logged-in user when available; fall back to

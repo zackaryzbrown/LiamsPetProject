@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getContestWindowSettings, votingOpenNow } from "@/lib/contest-state";
 
 // =====================================================================
 // spendVoteCreditsAction
@@ -35,6 +36,11 @@ export async function spendVoteCreditsAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "You must be signed in to vote." };
+
+  const contest = await getContestWindowSettings();
+  if (!contest || !votingOpenNow(contest)) {
+    return { ok: false, error: "Voting is currently closed." };
+  }
 
   const parsed = SpendSchema.safeParse({
     petSubmissionId: formData.get("petSubmissionId"),

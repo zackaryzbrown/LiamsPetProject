@@ -1,12 +1,15 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { buildEntryDonationUrl } from "@/lib/pledge";
 import { PetSubmissionSchema, validateImage } from "@/lib/validation";
+import {
+  getContestWindowSettings,
+  submissionsOpenNow,
+} from "@/lib/contest-state";
 
 export type EnterResult =
   | { ok: true; submissionId: string; donationUrl: string | null }
@@ -35,6 +38,20 @@ export async function enterPet(formData: FormData): Promise<EnterResult> {
   } = await supabase.auth.getUser();
   if (!user) {
     return { ok: false, error: "Please sign in before entering your pet." };
+  }
+
+  const contest = await getContestWindowSettings();
+  if (!contest) {
+    return {
+      ok: false,
+      error: "Contest settings are unavailable right now. Please try again in a minute.",
+    };
+  }
+  if (!submissionsOpenNow(contest)) {
+    return {
+      ok: false,
+      error: "Submissions are currently closed.",
+    };
   }
 
   const parsed = PetSubmissionSchema.safeParse({
