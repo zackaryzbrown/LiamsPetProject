@@ -18,9 +18,11 @@ import { Heart, Loader2 } from "lucide-react";
 export function SpendCreditsCard({
   balanceCents,
   pets,
+  votingOpen = true,
 }: {
   balanceCents: number;
   pets: { id: string; name: string }[];
+  votingOpen?: boolean;
 }) {
   const router = useRouter();
   const maxVotes = Math.floor(balanceCents / 100);
@@ -32,7 +34,7 @@ export function SpendCreditsCard({
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
 
-  if (balanceCents <= 0 || pets.length === 0) {
+  if (!votingOpen || balanceCents <= 0 || pets.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 grid gap-3">
@@ -40,7 +42,9 @@ export function SpendCreditsCard({
             Spend credits
           </p>
           <p className="text-sm text-ink-muted">
-            {balanceCents <= 0
+            {!votingOpen
+              ? "Voting is currently closed. Your credits are safe in your wallet and will be available when voting reopens."
+              : balanceCents <= 0
               ? "You don't have any credits yet. Donate more than $10 when you enter a pet, and the overage will land here as spendable votes."
               : "No approved pets yet — check back once submissions are reviewed."}
           </p>

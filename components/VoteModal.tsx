@@ -29,6 +29,8 @@ type Props = {
   // "Spend credits" mode that calls `spendVoteCreditsAction` directly
   // instead of opening Pledge.to.
   creditBalanceCents?: number;
+  // Contest-level vote gate from contest_settings.
+  votingOpen?: boolean;
 };
 
 // =====================================================================
@@ -52,6 +54,7 @@ export function VoteModal({
   onOpenChange,
   userEmail,
   creditBalanceCents = 0,
+  votingOpen = true,
 }: Props) {
   const router = useRouter();
   const [email, setEmail] = React.useState(userEmail ?? "");
@@ -81,6 +84,10 @@ export function VoteModal({
   const donationUrl = pet.pledgeDonationUrl;
 
   function handleDonate() {
+    if (!votingOpen) {
+      setError("Voting is currently closed.");
+      return;
+    }
     if (!donationUrl) return;
     const trimmed = email.trim();
     if (trimmed.length === 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
@@ -105,6 +112,10 @@ export function VoteModal({
   }
 
   function handleSpendCredits() {
+    if (!votingOpen) {
+      setError("Voting is currently closed.");
+      return;
+    }
     const votes = Number.parseInt(creditVotes, 10);
     if (!Number.isFinite(votes) || votes < 1) {
       setError("Enter how many votes (whole dollars) to spend.");
@@ -157,6 +168,15 @@ export function VoteModal({
               <Heart className="h-3.5 w-3.5 text-ember-500" />
               Currently {formatNumber(pet.totalVotes)} votes
             </div>
+
+            {!votingOpen && (
+              <p
+                role="alert"
+                className="rounded-xl border-2 border-ink bg-cream-100 px-3 py-2 text-sm text-ink-muted"
+              >
+                Voting is currently closed.
+              </p>
+            )}
 
             {canSpendCredits && (
               <div
@@ -242,7 +262,7 @@ export function VoteModal({
                   variant="ember"
                   size="lg"
                   onClick={handleSpendCredits}
-                  disabled={pending}
+                  disabled={pending || !votingOpen}
                 >
                   {pending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -300,7 +320,7 @@ export function VoteModal({
                   variant="ember"
                   size="lg"
                   onClick={handleDonate}
-                  disabled={pending}
+                  disabled={pending || !votingOpen}
                 >
                   {pending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

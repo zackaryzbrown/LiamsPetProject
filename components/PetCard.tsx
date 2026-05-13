@@ -20,12 +20,15 @@ export function PetCard({
   pet,
   userEmail,
   creditBalanceCents = 0,
+  votingOpen = true,
 }: {
   pet: PublicPet;
   userEmail?: string | null;
   creditBalanceCents?: number;
+  votingOpen?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
+  const canVote = votingOpen && (!!pet.pledgeDonationUrl || creditBalanceCents > 0);
   return (
     <>
       <div className="ink-card overflow-hidden flex flex-col">
@@ -53,13 +56,15 @@ export function PetCard({
               variant="ember"
               size="md"
               className="w-full"
-              disabled={!pet.pledgeDonationUrl && creditBalanceCents <= 0}
+              disabled={!canVote}
               onClick={() => setOpen(true)}
               aria-haspopup="dialog"
             >
-              {pet.pledgeDonationUrl || creditBalanceCents > 0
-                ? "Vote for this pet"
-                : "Donation link coming soon"}
+              {!votingOpen
+                ? "Voting closed"
+                : pet.pledgeDonationUrl || creditBalanceCents > 0
+                  ? "Vote for this pet"
+                  : "Donation link coming soon"}
             </Button>
           </div>
         </div>
@@ -70,6 +75,7 @@ export function PetCard({
         onOpenChange={setOpen}
         userEmail={userEmail}
         creditBalanceCents={creditBalanceCents}
+        votingOpen={votingOpen}
       />
     </>
   );

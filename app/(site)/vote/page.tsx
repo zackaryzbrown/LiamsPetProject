@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getApprovedPets, getPublicContest } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
 import { getCreditBalanceCents } from "@/lib/user-credits";
-import { MOCK_CONTEST } from "@/lib/mock-data";
 import { ArrowRight } from "lucide-react";
 
 export const metadata = { title: "Vote with a donation" };
@@ -25,14 +24,16 @@ export default async function VotePage() {
   const creditBalanceCents = user ? await getCreditBalanceCents(user.id) : 0;
 
   const c = contest ?? {
-    contestOpen: MOCK_CONTEST.contestOpen,
-    submissionsOpen: MOCK_CONTEST.contestOpen,
-    votingOpen: MOCK_CONTEST.contestOpen,
-    votingDeadline: MOCK_CONTEST.votingDeadline,
-    submissionDeadline: MOCK_CONTEST.submissionDeadline,
-    goalAmountCents: MOCK_CONTEST.goalAmountCents,
-    raisedAmountCents: MOCK_CONTEST.raisedAmountCents,
+    contestOpen: false,
+    submissionsOpen: false,
+    votingOpen: false,
+    votingDeadline: new Date().toISOString(),
+    submissionDeadline: new Date().toISOString(),
+    goalAmountCents: 0,
+    raisedAmountCents: 0,
   };
+  const votingIsOpen =
+    c.votingOpen && new Date(c.votingDeadline).getTime() > Date.now();
 
   return (
     <>
@@ -47,10 +48,20 @@ export default async function VotePage() {
             support <strong>Soul Dog Rescue</strong>.
           </p>
           <ContestStatusBadge
-            contestOpen={c.votingOpen}
+            contestOpen={votingIsOpen}
             votingDeadline={c.votingDeadline}
             className="mt-5"
           />
+          {!votingIsOpen && (
+            <p className="mt-4 max-w-xl rounded-xl border-2 border-ink bg-cream-100 px-4 py-3 text-sm text-ink-muted">
+              Voting is currently closed. You can still view pets and standings.
+            </p>
+          )}
+          {!contest && (
+            <p className="mt-3 max-w-xl rounded-xl border-2 border-ember-500 bg-ember-50 px-4 py-3 text-sm text-ember-700">
+              Live contest totals are temporarily unavailable.
+            </p>
+          )}
         </header>
         <GoalProgress raisedCents={c.raisedAmountCents} goalCents={c.goalAmountCents} />
       </section>
@@ -81,6 +92,7 @@ export default async function VotePage() {
                   pet={pet}
                   userEmail={userEmail}
                   creditBalanceCents={creditBalanceCents}
+                  votingOpen={votingIsOpen}
                 />
               ))}
             </div>

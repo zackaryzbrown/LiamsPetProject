@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { WaveDivider } from "@/components/WaveDivider";
 import { getApprovedPets, getPublicContest } from "@/lib/public-data";
-import { MOCK_CONTEST } from "@/lib/mock-data";
 import { ArrowRight, Coins, Camera, HeartHandshake } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -17,21 +16,34 @@ export default async function HomePage() {
     getApprovedPets(),
   ]);
 
-  // Fall back to mock contest copy if the DB isn't reachable yet (dev).
   const c = contest ?? {
-    contestOpen: MOCK_CONTEST.contestOpen,
-    submissionsOpen: MOCK_CONTEST.contestOpen,
-    votingOpen: MOCK_CONTEST.contestOpen,
-    votingDeadline: MOCK_CONTEST.votingDeadline,
-    submissionDeadline: MOCK_CONTEST.submissionDeadline,
-    goalAmountCents: MOCK_CONTEST.goalAmountCents,
-    raisedAmountCents: MOCK_CONTEST.raisedAmountCents,
+    contestOpen: false,
+    submissionsOpen: false,
+    votingOpen: false,
+    votingDeadline: new Date().toISOString(),
+    submissionDeadline: new Date().toISOString(),
+    goalAmountCents: 0,
+    raisedAmountCents: 0,
   };
+  const votingIsOpen =
+    c.votingOpen && new Date(c.votingDeadline).getTime() > Date.now();
 
   return (
     <>
-      <Hero contestOpen={c.votingOpen} votingDeadline={c.votingDeadline} />
+      <Hero
+        contestOpen={votingIsOpen}
+        votingDeadline={c.votingDeadline}
+        goalAmountCents={c.goalAmountCents}
+      />
       <WaveDivider direction="down" className="text-cream" />
+
+      {!contest && (
+        <section className="container pt-8">
+          <p className="rounded-xl border-2 border-ember-500 bg-ember-50 px-4 py-3 text-sm text-ember-700">
+            Live contest totals are temporarily unavailable.
+          </p>
+        </section>
+      )}
 
       <section className="container py-16 grid gap-10 md:grid-cols-[1.1fr_1fr] items-start">
         <GoalProgress

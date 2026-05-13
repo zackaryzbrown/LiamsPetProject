@@ -3,13 +3,25 @@ import { Button } from "./ui/button";
 import { ContestStatusBadge } from "./ContestStatusBadge";
 import { PawMark } from "./PawMark";
 import { ArrowRight } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 type Props = {
   contestOpen: boolean;
   votingDeadline: string | null;
+  goalAmountCents: number;
 };
 
-export function Hero({ contestOpen, votingDeadline }: Props) {
+function shortDate(iso: string | null): string {
+  if (!iso) return "TBD";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "TBD";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(d);
+}
+
+export function Hero({ contestOpen, votingDeadline, goalAmountCents }: Props) {
   return (
     <section className="royal-panel">
       {/* decorative paws */}
@@ -36,7 +48,9 @@ export function Hero({ contestOpen, votingDeadline }: Props) {
           <span className="block">
             Rescue <span className="italic text-ember-300">dogs</span>.
           </span>
-          <span className="block text-cream/90">A $500 goal.</span>
+          <span className="block text-cream/90">
+            A {formatCurrency(goalAmountCents)} goal.
+          </span>
         </h1>
 
         <p className="mt-6 max-w-2xl text-cream/85 text-lg md:text-xl leading-relaxed">
@@ -59,10 +73,10 @@ export function Hero({ contestOpen, votingDeadline }: Props) {
 
         <dl className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl">
           {[
-            { k: "Goal", v: "$500" },
+            { k: "Goal", v: formatCurrency(goalAmountCents) },
             { k: "Per pet", v: "$10" },
             { k: "1 vote", v: "$1" },
-            { k: "Closes", v: "Nov 13" },
+            { k: "Closes", v: shortDate(votingDeadline) },
           ].map((s) => (
             <div
               key={s.k}

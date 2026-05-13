@@ -22,7 +22,9 @@ export default async function EnterPage() {
   }
 
   const contest = await getPublicContest();
-  const submissionsOpen = contest?.submissionsOpen ?? true;
+  const submissionsOpen =
+    !!contest?.submissionsOpen &&
+    new Date(contest.submissionDeadline).getTime() > Date.now();
 
   return (
     <section className="container py-12 md:py-20 grid gap-10 lg:grid-cols-[1fr_400px]">
@@ -45,7 +47,9 @@ export default async function EnterPage() {
               ) : (
                 <div className="grid gap-4 text-center py-8">
                   <p className="font-display text-2xl font-black">
-                    Submissions are currently closed.
+                    {contest
+                      ? "Submissions are currently closed."
+                      : "Contest settings are temporarily unavailable."}
                   </p>
                   <p className="text-ink-muted">
                     You can still vote for entered pets — every dollar still goes to Soul Dog

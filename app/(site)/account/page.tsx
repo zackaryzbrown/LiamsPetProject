@@ -43,7 +43,13 @@ export default async function AccountPage() {
   // Use the admin client for storage URL signing only — pet rows come
   // through RLS so the user only sees their own submissions.
   const admin = createAdminClient();
-  const [{ data: pets }, balanceCents, history, approvedPets] = await Promise.all([
+  const [
+    { data: pets },
+    balanceCents,
+    history,
+    approvedPets,
+    { data: contestSettings },
+  ] = await Promise.all([
     supabase
       .from("pet_submissions")
       .select(
@@ -58,7 +64,15 @@ export default async function AccountPage() {
       .select("id, pet_name")
       .eq("status", "approved")
       .order("pet_name", { ascending: true }),
+    supabase
+      .from("contest_settings")
+      .select("voting_open, voting_deadline")
+      .eq("id", 1)
+      .maybeSingle(),
   ]);
+  const votingIsOpen =
+    !!contestSettings?.voting_open &&
+    new Date(contestSettings.voting_deadline).getTime() > Date.now();
   const approvedOptions = (approvedPets.data ?? []).map((p) => ({
     id: p.id as string,
     name: p.pet_name as string,
@@ -114,6 +128,7 @@ export default async function AccountPage() {
         <SpendCreditsCard
           balanceCents={balanceCents}
           pets={approvedOptions}
+          votingOpen={votingIsOpen}
         />
       </div>
 

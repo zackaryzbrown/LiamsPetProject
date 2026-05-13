@@ -4,7 +4,10 @@ import { formatCurrency } from "@/lib/utils";
 type Props = { raisedCents: number; goalCents: number };
 
 export function GoalProgress({ raisedCents, goalCents }: Props) {
-  const pct = Math.min(100, Math.round((raisedCents / goalCents) * 100));
+  const pct =
+    goalCents > 0
+      ? Math.min(100, Math.round((raisedCents / goalCents) * 100))
+      : 0;
   return (
     <div className="ink-card p-6 md:p-8">
       <div className="flex items-baseline justify-between gap-4 flex-wrap">
