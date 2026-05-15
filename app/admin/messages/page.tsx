@@ -7,7 +7,7 @@ export default async function AdminMessagesPage() {
   const admin = createAdminClient();
   const { data: messages, error } = await admin
     .from("contact_messages")
-    .select("id, name, email, subject, message, user_agent, ip, created_at")
+    .select("id, name, email, subject, message, user_agent, ip, created_at, read_at")
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -31,6 +31,18 @@ export default async function AdminMessagesPage() {
   }
 
   const rows = messages ?? [];
+  const unreadIds = rows.filter((m) => !m.read_at).map((m) => m.id);
+
+  // Auto-mark everything visible as read. Fire-and-forget: render the
+  // page with the *current* read state (so the user can still see which
+  // rows were unread when they landed), but clear the badge for next
+  // navigation.
+  if (unreadIds.length > 0) {
+    await admin
+      .from("contact_messages")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds);
+  }
 
   return (
     <section className="grid gap-6">
@@ -62,14 +74,24 @@ export default async function AdminMessagesPage() {
             const when = m.created_at
               ? new Date(m.created_at).toLocaleString()
               : "—";
+            const wasUnread = !m.read_at;
             return (
               <li
                 key={m.id}
-                className="rounded-2xl border-2 border-ink bg-white p-5 shadow-card-sm"
+                className={
+                  "rounded-2xl border-2 border-ink bg-white p-5 shadow-card-sm" +
+                  (wasUnread ? " ring-2 ring-ember-500/60" : "")
+                }
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div>
-                    <p className="font-display text-lg font-black">
+                    <p className="font-display text-lg font-black flex items-center gap-2">
+                      {wasUnread && (
+                        <span
+                          aria-label="Unread"
+                          className="inline-block h-2 w-2 rounded-full bg-ember-500"
+                        />
+                      )}
                       {m.subject?.trim() || "(no subject)"}
                     </p>
                     <p className="text-sm text-ink-muted">

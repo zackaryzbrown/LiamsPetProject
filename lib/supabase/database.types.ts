@@ -287,6 +287,7 @@ export type Database = {
           user_agent: string | null;
           ip: string | null;
           created_at: string;
+          read_at: string | null;
         };
         Insert: {
           id?: string;
@@ -297,6 +298,7 @@ export type Database = {
           user_agent?: string | null;
           ip?: string | null;
           created_at?: string;
+          read_at?: string | null;
         };
         Update: Partial<{
           name: string;
@@ -305,6 +307,7 @@ export type Database = {
           message: string;
           user_agent: string | null;
           ip: string | null;
+          read_at: string | null;
         }>;
         Relationships: [];
       };

@@ -2,22 +2,37 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { signOut } from "@/app/auth/actions";
 import { Badge } from "@/components/ui/badge";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { LayoutDashboard, Inbox, Trophy, Settings, LogOut, ShieldCheck, GitMerge, ExternalLink, HeartHandshake, MessageSquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const NAV: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const NAV: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; key?: string }[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/submissions", label: "Submissions", icon: Inbox },
   { href: "/admin/donations", label: "Donations", icon: HeartHandshake },
-  { href: "/admin/messages", label: "Messages", icon: MessageSquare },
+  { href: "/admin/messages", label: "Messages", icon: MessageSquare, key: "messages" },
   { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/admin/reconciliation", label: "Reconciliation", icon: GitMerge },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
+async function getUnreadMessageCount(): Promise<number> {
+  try {
+    const admin = createAdminClient();
+    const { count } = await admin
+      .from("contact_messages")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null);
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { email } = await requireAdmin();
+  const unreadMessages = await getUnreadMessageCount();
 
   return (
     <div className="min-h-screen bg-cream">
@@ -54,15 +69,32 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="container grid lg:grid-cols-[220px_1fr] gap-8 py-8">
         <aside className="lg:sticky lg:top-8 lg:self-start">
           <nav className="grid gap-1 p-2 rounded-2xl border-2 border-ink bg-white shadow-card">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-cream-200"
-              >
-                <Icon className="h-4 w-4" /> {label}
-              </Link>
-            ))}
+            {NAV.map(({ href, label, icon: Icon, key }) => {
+              const showBadge = key === "messages" && unreadMessages > 0;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-cream-200"
+                >
+                  <span className="relative inline-flex">
+                    <Icon className="h-4 w-4" />
+                    {showBadge && (
+                      <span className="absolute -right-1.5 -top-1.5 h-2 w-2 rounded-full bg-ember-500 ring-2 ring-white" />
+                    )}
+                  </span>
+                  <span className="flex-1">{label}</span>
+                  {showBadge && (
+                    <span
+                      aria-label={`${unreadMessages} unread`}
+                      className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-ember-500 px-1.5 text-[10px] font-black text-white"
+                    >
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
         </aside>
         <main className="min-w-0">{children}</main>
