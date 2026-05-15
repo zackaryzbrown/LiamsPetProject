@@ -49,8 +49,8 @@ export function Hero({
   votingDeadline,
   goalAmountCents,
   raisedAmountCents,
-  imageSrc = "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=900&q=80",
-  imageAlt = "A happy rescue dog smiling at the camera",
+  imageSrc = "/smudge.jpg",
+  imageAlt = "Smudge — a rescue dog wearing a red bike helmet, smiling in the backseat of a car",
 }: Props) {
   const pct =
     goalAmountCents > 0

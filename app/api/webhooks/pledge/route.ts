@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import {
   classifyDonationType,
   isUuid,
+  isNonCreditingPledgeEventType,
   parsePledgeWebhook,
   votesFromAmountCents,
   ENTRY_FEE_CENTS,
@@ -52,7 +53,10 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = extractPledgeSignature(request.headers);
-  const signatureVerified = verifyPledgeSignature(rawBody, signature);
+  const webhookSecret = env.PLEDGE_WEBHOOK_SECRET;
+  const signatureVerified = webhookSecret
+    ? verifyPledgeSignature(rawBody, signature)
+    : false;
   const headerSnapshot = captureHeaders(request.headers);
 
   let payload: Record<string, unknown>;
@@ -62,14 +66,35 @@ export async function POST(request: Request) {
     payload = { _parseError: true, _raw: rawBody.slice(0, 2000) };
   }
 
+  if (!webhookSecret) {
+    try {
+      const admin = createAdminClient();
+      await admin.from("pledge_webhook_events").insert({
+        pledge_event_id: typeof payload.id === "string" ? payload.id : null,
+        event_type: typeof payload.event === "string" ? payload.event : null,
+        signature_verified: false,
+        processing_status: "failed",
+        error_message: "Webhook secret/API key is not configured",
+        raw_payload: payload as never,
+        raw_headers: headerSnapshot as never,
+      });
+    } catch {
+      // best-effort logging; the 503 still needs to go back to the sender.
+    }
+    return NextResponse.json(
+      { ok: false, error: "Webhook secret/API key is not configured" },
+      { status: 503 },
+    );
+  }
+
   // Refuse unsigned requests when a secret is configured.
-  if (env.PLEDGE_WEBHOOK_SECRET && !signatureVerified) {
+  if (!signatureVerified) {
     // Non-secret fingerprint of the secret currently in use, so we can
     // verify (without leaking the value) that the running Lambda has the
     // expected secret baked in. Pledge signs with HMAC-SHA256(api_key,
     // body) → base64; if the fingerprint here doesn't match the first 8
     // chars of what we'd expect, the wrong secret is live.
-    const secret = env.PLEDGE_WEBHOOK_SECRET ?? "";
+    const secret = webhookSecret;
     const secretFingerprint =
       secret.length >= 4
         ? `${secret.slice(0, 4)}…${secret.slice(-2)} (len ${secret.length})`
@@ -189,9 +214,28 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ ok: true, logged: true }, { status: 200 });
   }
+  const eventIdForDb = parsed.eventId ?? parsed.transactionId ?? crypto.randomUUID();
+
+  // Refund-like events should be recorded for audit/reconciliation, but
+  // must never inflate votes or dollars raised.
+  if (isNonCreditingPledgeEventType(parsed.eventType)) {
+    await admin.from("pledge_webhook_events").insert({
+      pledge_event_id: eventIdForDb,
+      event_type: parsed.eventType,
+      signature_verified: signatureVerified,
+      processing_status: "processed",
+      error_message: `Ignored non-crediting event type: ${parsed.eventType}`,
+      raw_payload: payload as never,
+      raw_headers: headerSnapshot as never,
+      processed_at: new Date().toISOString(),
+    });
+    return NextResponse.json(
+      { ok: true, ignored: true, eventId: eventIdForDb, eventType: parsed.eventType },
+      { status: 200 },
+    );
+  }
 
   // ---- Insert pledge_donations (idempotent) ---------------------------
-  const eventIdForDb = parsed.eventId ?? parsed.transactionId ?? crypto.randomUUID();
   // Entry donations NEVER earn votes, regardless of amount. Submitting a
   // pet is not the same as voting for a pet — votes only come from the
   // /vote page after the pet is approved. Entry money still counts toward

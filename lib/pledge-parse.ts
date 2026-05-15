@@ -271,6 +271,18 @@ export function classifyDonationType(
   return "unknown";
 }
 
+const NON_CREDITING_EVENT_PATTERNS = [
+  /\brefund(ed)?\b/i,
+  /\breversal\b/i,
+  /\bchargeback\b/i,
+  /\bdispute\b/i,
+];
+
+export function isNonCreditingPledgeEventType(eventType: string | null): boolean {
+  if (!eventType) return false;
+  return NON_CREDITING_EVENT_PATTERNS.some((pattern) => pattern.test(eventType));
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function isUuid(v: string | null | undefined): v is string {
   return !!v && UUID_RE.test(v);

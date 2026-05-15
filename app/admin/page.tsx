@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTotalRaisedCents } from "@/lib/donation-totals";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminOverviewPage() {
   const admin = createAdminClient();
 
-  const [{ data: pets }, pending, unmapped] = await Promise.all([
+  const [{ data: pets }, pending, unmapped, raisedCents] = await Promise.all([
     admin
       .from("pet_submissions")
       .select("status, total_votes, total_donated_cents"),
@@ -23,13 +24,10 @@ export default async function AdminOverviewPage() {
       .from("pledge_webhook_events")
       .select("id", { count: "exact", head: true })
       .eq("processing_status", "unmapped"),
+    getTotalRaisedCents(),
   ]);
 
   const approved = (pets ?? []).filter((p) => p.status === "approved");
-  const raisedCents = approved.reduce(
-    (sum, p) => sum + (p.total_donated_cents ?? 0),
-    0,
-  );
   const votes = approved.reduce((sum, p) => sum + (p.total_votes ?? 0), 0);
 
   return (
@@ -48,7 +46,9 @@ export default async function AdminOverviewPage() {
             <p className="mt-2 font-display text-4xl font-black tabular-nums">
               {formatCurrency(raisedCents)}
             </p>
-            <p className="mt-1 text-sm text-ink-muted">Sum of approved pets&apos; donations.</p>
+            <p className="mt-1 text-sm text-ink-muted">
+              All processed Pledge.to donations, including general campaign gifts.
+            </p>
           </CardContent>
         </Card>
         <Card>

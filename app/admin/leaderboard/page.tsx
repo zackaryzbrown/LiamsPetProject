@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTotalRaisedCents } from "@/lib/donation-totals";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,20 +10,19 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLeaderboardPage() {
   const admin = createAdminClient();
-  const { data: pets } = await admin
-    .from("pet_submissions")
-    .select(
-      "id, pet_name, owner_name, total_votes, manual_vote_adjustment, total_donated_cents, pledge_donation_url",
-    )
-    .eq("status", "approved")
-    .order("total_votes", { ascending: false })
-    .limit(500);
+  const [{ data: pets }, totalRaised] = await Promise.all([
+    admin
+      .from("pet_submissions")
+      .select(
+        "id, pet_name, owner_name, total_votes, manual_vote_adjustment, total_donated_cents, pledge_donation_url",
+      )
+      .eq("status", "approved")
+      .order("total_votes", { ascending: false })
+      .limit(500),
+    getTotalRaisedCents(),
+  ]);
 
   const totalVotes = (pets ?? []).reduce((s, p) => s + (p.total_votes ?? 0), 0);
-  const totalRaised = (pets ?? []).reduce(
-    (s, p) => s + (p.total_donated_cents ?? 0),
-    0,
-  );
 
   return (
     <div className="grid gap-6">

@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
+import { getTotalRaisedCents } from "@/lib/donation-totals";
 import { buildVoteDonationUrl } from "@/lib/pledge";
 
 // =====================================================================
@@ -88,14 +89,7 @@ export async function getPublicContest(): Promise<PublicContest | null> {
     .maybeSingle();
   if (sErr || !settings) return null;
 
-  const { data: totals } = await admin
-    .from("pet_submissions")
-    .select("total_donated_cents")
-    .eq("status", "approved");
-  const raised = (totals ?? []).reduce(
-    (sum, r) => sum + (r.total_donated_cents ?? 0),
-    0,
-  );
+  const raised = await getTotalRaisedCents();
 
   return {
     contestOpen: settings.contest_open,

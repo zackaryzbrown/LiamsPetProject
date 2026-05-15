@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { PetCard } from "@/components/PetCard";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ContestStatusBadge } from "@/components/ContestStatusBadge";
