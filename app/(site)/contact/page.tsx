@@ -1,14 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Mail, ArrowRight } from "lucide-react";
+import { Mail } from "lucide-react";
+import { ContactForm } from "./ContactForm";
 
 export const metadata = { title: "Contact" };
 
 export default function ContactPage() {
-  // Contact email is configurable via env. The form below uses a mailto:
-  // submission so we don't need to wire an email provider yet.
   const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.org";
   return (
     <section className="container py-16 md:py-24 grid gap-10 lg:grid-cols-2">
@@ -33,40 +29,15 @@ export default function ContactPage() {
             <p className="font-display text-xl font-black">{email}</p>
           </div>
         </a>
+        <p className="mt-6 text-sm text-ink-muted max-w-md">
+          Prefer email? Either way works — the form sends straight to us, no inbox-hop
+          required.
+        </p>
       </header>
 
       <Card>
-        <CardContent className="p-6 md:p-8">
-          <form
-            className="grid gap-5"
-            action={`mailto:${email}`}
-            method="post"
-            encType="text/plain"
-          >
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Your name</Label>
-                <Input id="name" name="name" placeholder="Jane Doe" required />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" placeholder="jane@example.com" required />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input id="subject" name="subject" placeholder="What's this about?" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="message">Message</Label>
-              <Textarea id="message" name="message" rows={5} placeholder="Type your message…" required />
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" variant="ember" size="lg">
-                Send <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </form>
+        <CardContent>
+          <ContactForm />
         </CardContent>
       </Card>
     </section>

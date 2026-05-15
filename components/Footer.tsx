@@ -4,8 +4,9 @@ import { PawMark } from "./PawMark";
 export function Footer() {
   const year = new Date().getFullYear();
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.org";
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
   return (
-    <footer className="royal-panel border-t-2 border-ink mt-24">
+    <footer className="relative bg-royal-700 text-cream border-t-2 border-ink mt-24">
       <div className="container py-14 grid gap-10 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
@@ -46,7 +47,20 @@ export function Footer() {
       <div className="border-t-2 border-ink/60">
         <div className="container py-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-cream/70">
           <p>© {year} Pets for Pups · Built for Soul Dog Rescue</p>
-          <p className="italic">Donations are not refundable. $1 donated = 1 vote.</p>
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+            {supportEmail && (
+              <p>
+                Site issue?{" "}
+                <a
+                  className="underline decoration-cream/40 hover:decoration-cream"
+                  href={`mailto:${supportEmail}?subject=PetsForPups%20site%20issue`}
+                >
+                  {supportEmail}
+                </a>
+              </p>
+            )}
+            <p className="italic">Donations are not refundable. $1 donated = 1 vote.</p>
+          </div>
         </div>
       </div>
     </footer>

@@ -90,7 +90,10 @@ export function VoteModal({
     }
     if (!donationUrl) return;
     const trimmed = email.trim();
-    if (trimmed.length === 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    // Permissive email check: anything resembling "x@y.z" where each segment
+    // contains at least one non-whitespace, non-@ character. We let Pledge.to
+    // do the real validation — we just need *something* to attribute against.
+    if (trimmed.length === 0 || !/^\S+@\S+\.\S+$/.test(trimmed)) {
       setError("Please enter the email you'll use on Pledge.to.");
       return;
     }

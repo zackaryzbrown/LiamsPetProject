@@ -1,14 +1,17 @@
 import Image from "next/image";
 import { formatNumber } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 import type { PublicPet } from "@/lib/public-data";
 
 export function Leaderboard({ pets }: { pets: PublicPet[] }) {
   const sorted = [...pets].sort((a, b) => b.totalVotes - a.totalVotes);
   if (sorted.length === 0) {
     return (
-      <div className="ink-card p-8 text-center text-ink-muted">
-        No votes have been recorded yet. Donate to a pet to put them on the board.
-      </div>
+      <EmptyState
+        variant="ink"
+        title="No votes yet."
+        description="Donate to a pet to put them on the board."
+      />
     );
   }
   return (
@@ -21,6 +24,7 @@ export function Leaderboard({ pets }: { pets: PublicPet[] }) {
         {sorted.map((pet, i) => (
           <li key={pet.id} className="flex items-center gap-4 p-4 sm:p-5">
             <span
+              aria-label={`Rank ${i + 1}`}
               className={
                 "stamp h-12 w-12 text-base shrink-0 " +
                 (i === 0
@@ -32,7 +36,7 @@ export function Leaderboard({ pets }: { pets: PublicPet[] }) {
                   : "bg-cream-200 !text-ink")
               }
             >
-              {i + 1}
+              <span aria-hidden>#{i + 1}</span>
             </span>
             <div className="relative h-14 w-14 sm:h-16 sm:w-16 rounded-xl border-2 border-ink overflow-hidden bg-cream-200 shrink-0">
               <Image

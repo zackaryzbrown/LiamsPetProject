@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/EmptyState";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildVoteDonationUrl } from "@/lib/pledge";
@@ -176,17 +177,11 @@ export default async function AccountPage() {
 
       <div className="mt-10 grid gap-5">
         {myPets.length === 0 && (
-          <Card>
-            <CardContent className="p-8 grid gap-4 text-center">
-              <p className="font-display text-2xl font-black">No submissions yet.</p>
-              <p className="text-ink-muted">Enter your first pet to get on the leaderboard.</p>
-              <div className="flex justify-center">
-                <Button asChild variant="ember" size="lg">
-                  <Link href="/enter">Enter your pet</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="No submissions yet."
+            description="Enter your first pet to get on the leaderboard."
+            action={{ href: "/enter", label: "Enter your pet" }}
+          />
         )}
 
         {myPets.map((p) => {

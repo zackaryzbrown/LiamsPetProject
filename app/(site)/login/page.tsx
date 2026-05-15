@@ -42,7 +42,7 @@ export default async function LoginPage({
       </p>
 
       <Card className="mt-8">
-        <CardContent className="p-6 md:p-8 grid gap-4">
+        <CardContent className="grid gap-4">
           {error && (
             <div className="rounded-xl border-2 border-ember-500 bg-ember-50 p-3 text-sm text-ember-700">
               {error}

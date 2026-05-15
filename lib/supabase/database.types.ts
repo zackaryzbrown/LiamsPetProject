@@ -277,6 +277,37 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      contact_messages: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          subject: string | null;
+          message: string;
+          user_agent: string | null;
+          ip: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          subject?: string | null;
+          message: string;
+          user_agent?: string | null;
+          ip?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<{
+          name: string;
+          email: string;
+          subject: string | null;
+          message: string;
+          user_agent: string | null;
+          ip: string | null;
+        }>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {

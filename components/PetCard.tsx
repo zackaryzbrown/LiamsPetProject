@@ -64,7 +64,7 @@ export function PetCard({
                 ? "Voting closed"
                 : pet.pledgeDonationUrl || creditBalanceCents > 0
                   ? "Vote for this pet"
-                  : "Donation link coming soon"}
+                  : "Coming soon"}
             </Button>
           </div>
         </div>

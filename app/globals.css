@@ -80,3 +80,18 @@
            border-2 border-ink font-display italic font-black;
   }
 }
+
+/* Respect users who prefer less motion: kill all decorative animation
+   and reduce transitions to near-instant. Functional indicators (spinners
+   for in-flight requests) keep their own short transitions through inline
+   utility classes the user can still see. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

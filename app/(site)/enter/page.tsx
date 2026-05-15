@@ -41,7 +41,7 @@ export default async function EnterPage() {
 
         <div className="mt-10">
           <Card>
-            <CardContent className="p-6 md:p-8">
+            <CardContent>
               {submissionsOpen ? (
                 <EnterPetForm action={enterPet} accountEmail={user.email ?? ""} />
               ) : (
