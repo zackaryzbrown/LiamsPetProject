@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/auth";
 import { signOut } from "@/app/auth/actions";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,11 @@ const NAV: { href: string; label: string; icon: React.ComponentType<{ className?
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-async function getUnreadMessageCount(): Promise<number> {
+async function getUnreadMessageCount(onMessagesPage: boolean): Promise<number> {
+  // While the user is on /admin/messages, the page itself marks
+  // everything read. Show 0 here so the badge clears even on the same
+  // render (the page-level update races with this query otherwise).
+  if (onMessagesPage) return 0;
   try {
     const admin = createAdminClient();
     const { count } = await admin
@@ -32,7 +37,10 @@ async function getUnreadMessageCount(): Promise<number> {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { email } = await requireAdmin();
-  const unreadMessages = await getUnreadMessageCount();
+  const hdrs = await headers();
+  const pathname = hdrs.get("x-pathname") ?? "";
+  const onMessagesPage = pathname.startsWith("/admin/messages");
+  const unreadMessages = await getUnreadMessageCount(onMessagesPage);
 
   return (
     <div className="min-h-screen bg-cream">
