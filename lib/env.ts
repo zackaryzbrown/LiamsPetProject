@@ -16,6 +16,23 @@ const optional = (name: string): string | undefined => {
   return v && v.length > 0 ? v : undefined;
 };
 
+const normalizePledgeDonationUrl = (
+  value: string | undefined,
+): string | undefined => {
+  if (!value) return value;
+  try {
+    const u = new URL(value);
+    if (u.hostname.toLowerCase() === "staging.pledge.to") {
+      u.hostname = "www.pledge.to";
+      u.port = "";
+      return u.toString();
+    }
+    return value;
+  } catch {
+    return value;
+  }
+};
+
 const adminEmails = (): string[] =>
   (process.env.ADMIN_EMAILS ?? "")
     .split(",")
@@ -88,11 +105,12 @@ export const env = {
   },
   get PLEDGE_SANDBOX_API_BASE_URL() {
     return (
-      process.env.PLEDGE_SANDBOX_API_BASE_URL ?? "https://api.sandbox.pledge.to/v1"
+      process.env.PLEDGE_SANDBOX_API_BASE_URL ??
+      "https://api.sandbox.pledge.to/v1"
     );
   },
   get PLEDGE_DEFAULT_DONATION_URL() {
-    return optional("PLEDGE_DEFAULT_DONATION_URL");
+    return normalizePledgeDonationUrl(optional("PLEDGE_DEFAULT_DONATION_URL"));
   },
   get PLEDGE_DEFAULT_WIDGET_ID() {
     return optional("PLEDGE_DEFAULT_WIDGET_ID");
