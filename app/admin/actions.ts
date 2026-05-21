@@ -20,7 +20,9 @@ function pathExt(path: string): string {
 // at <id>.<ext> and flips status to approved. The leaderboard reads
 // directly from pet_submissions where status='approved'.
 // =====================================================================
-export async function approveSubmission(submissionId: string): Promise<ActionResult> {
+export async function approveSubmission(
+  submissionId: string,
+): Promise<ActionResult> {
   await requireAdmin();
   const admin = createAdminClient();
 
@@ -76,7 +78,9 @@ export async function approveSubmission(submissionId: string): Promise<ActionRes
 // Webhook normally handles this, but admins can flip status when the
 // entry was paid outside Pledge.to.
 // =====================================================================
-export async function confirmEntryDonation(submissionId: string): Promise<ActionResult> {
+export async function confirmEntryDonation(
+  submissionId: string,
+): Promise<ActionResult> {
   await requireAdmin();
   const admin = createAdminClient();
 
@@ -112,14 +116,19 @@ const RejectSchema = z.object({
   reason: z.string().trim().min(1, "Provide a reason.").max(500),
 });
 
-export async function rejectSubmission(formData: FormData): Promise<ActionResult> {
+export async function rejectSubmission(
+  formData: FormData,
+): Promise<ActionResult> {
   await requireAdmin();
   const parsed = RejectSchema.safeParse({
     submissionId: formData.get("submissionId"),
     reason: formData.get("reason"),
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
   }
   const admin = createAdminClient();
 
@@ -155,7 +164,9 @@ export async function rejectSubmission(formData: FormData): Promise<ActionResult
 // =====================================================================
 // Delete a submission entirely (clears both buckets).
 // =====================================================================
-export async function deleteSubmission(submissionId: string): Promise<ActionResult> {
+export async function deleteSubmission(
+  submissionId: string,
+): Promise<ActionResult> {
   await requireAdmin();
   const admin = createAdminClient();
 
@@ -166,13 +177,20 @@ export async function deleteSubmission(submissionId: string): Promise<ActionResu
     .maybeSingle();
 
   if (row?.image_path && row.image_path !== "pending") {
-    await admin.storage.from(env.SUPABASE_BUCKET_UPLOADS).remove([row.image_path]);
+    await admin.storage
+      .from(env.SUPABASE_BUCKET_UPLOADS)
+      .remove([row.image_path]);
   }
   if (row?.public_image_path) {
-    await admin.storage.from(env.SUPABASE_BUCKET_PUBLIC).remove([row.public_image_path]);
+    await admin.storage
+      .from(env.SUPABASE_BUCKET_PUBLIC)
+      .remove([row.public_image_path]);
   }
 
-  const { error } = await admin.from("pet_submissions").delete().eq("id", submissionId);
+  const { error } = await admin
+    .from("pet_submissions")
+    .delete()
+    .eq("id", submissionId);
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin/submissions");
@@ -199,6 +217,11 @@ const PledgeLinksSchema = z.object({
     .refine(
       (v) => v === undefined || /^https?:\/\//i.test(v),
       "Must be an http(s) URL",
+    )
+    .refine(
+      (v) =>
+        v === undefined || !/^https?:\/\/staging\.pledge\.to(?:\/|$)/i.test(v),
+      "Use https://www.pledge.to/... (staging.pledge.to is not a public donation host)",
     ),
   pledgeWidgetId: z
     .string()
@@ -220,7 +243,9 @@ const PledgeLinksSchema = z.object({
     .transform((v) => (v && v.length > 0 ? v : undefined)),
 });
 
-export async function updatePledgeLinks(formData: FormData): Promise<ActionResult> {
+export async function updatePledgeLinks(
+  formData: FormData,
+): Promise<ActionResult> {
   await requireAdmin();
   const parsed = PledgeLinksSchema.safeParse({
     submissionId: formData.get("submissionId"),
@@ -230,7 +255,10 @@ export async function updatePledgeLinks(formData: FormData): Promise<ActionResul
     pledgeMappingKey: formData.get("pledgeMappingKey") ?? "",
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
   }
   const admin = createAdminClient();
   const { error } = await admin
@@ -263,7 +291,9 @@ const ManualVoteSchema = z.object({
   reason: z.string().trim().min(1, "Reason is required.").max(500),
 });
 
-export async function manualVoteAdjustment(formData: FormData): Promise<ActionResult> {
+export async function manualVoteAdjustment(
+  formData: FormData,
+): Promise<ActionResult> {
   const ctx = await requireAdmin();
   const parsed = ManualVoteSchema.safeParse({
     submissionId: formData.get("submissionId"),
@@ -271,7 +301,10 @@ export async function manualVoteAdjustment(formData: FormData): Promise<ActionRe
     reason: formData.get("reason") ?? "",
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
   }
   if (parsed.data.amountDollars === 0) {
     return { ok: false, error: "Enter a non-zero amount." };
@@ -317,7 +350,9 @@ const SettingsSchema = z.object({
   goalAmountDollars: z.coerce.number().nonnegative().max(10_000_000),
 });
 
-export async function updateContestSettings(formData: FormData): Promise<ActionResult> {
+export async function updateContestSettings(
+  formData: FormData,
+): Promise<ActionResult> {
   await requireAdmin();
   const parsed = SettingsSchema.safeParse({
     submissionsOpen: formData.get("submissionsOpen") ?? "",
@@ -327,7 +362,10 @@ export async function updateContestSettings(formData: FormData): Promise<ActionR
     goalAmountDollars: formData.get("goalAmountDollars"),
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
   }
   const sub = new Date(parsed.data.submissionDeadline);
   const vote = new Date(parsed.data.votingDeadline);
@@ -335,7 +373,10 @@ export async function updateContestSettings(formData: FormData): Promise<ActionR
     return { ok: false, error: "Invalid date format." };
   }
   if (vote.getTime() < sub.getTime()) {
-    return { ok: false, error: "Voting deadline must be on/after the submission deadline." };
+    return {
+      ok: false,
+      error: "Voting deadline must be on/after the submission deadline.",
+    };
   }
 
   const admin = createAdminClient();

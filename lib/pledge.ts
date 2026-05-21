@@ -1,6 +1,15 @@
 import "server-only";
 import { env } from "@/lib/env";
 
+function normalizePledgeDonationHost(u: URL): void {
+  // Some older configs used staging.pledge.to, which serves 404 for
+  // public donation pages. Normalize to the public host.
+  if (u.hostname.toLowerCase() === "staging.pledge.to") {
+    u.hostname = "www.pledge.to";
+    u.port = "";
+  }
+}
+
 // =====================================================================
 // Builds the URL we send users to for the $10 entry donation.
 //
@@ -22,6 +31,7 @@ export function buildEntryDonationUrl(
   if (!base) return null;
   try {
     const u = new URL(base);
+    normalizePledgeDonationHost(u);
     u.searchParams.set(env.PLEDGE_SUBMISSION_FIELD_KEY, submissionId);
     // utm_content provides a second fallback the webhook can match on.
     u.searchParams.set("utm_content", submissionId);
