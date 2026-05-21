@@ -6,3 +6,8 @@ dist
 .env.local
 .DS_Store
 *.tsbuildinfo
+
+# Local Refact runtime queue (tooling state)
+.refact/buddy/runtime_queue.jsonl
+.refact/buddy/state.json
+.refact/buddy/memory_ops.jsonl
