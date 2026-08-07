@@ -24,16 +24,12 @@ create table if not exists public.vote_credit_ledger (
   reason              text,
   created_at          timestamptz not null default now()
 );
-
 create index if not exists vote_credit_ledger_user_idx
   on public.vote_credit_ledger (user_id, created_at desc);
-
 create index if not exists vote_credit_ledger_pet_idx
   on public.vote_credit_ledger (pet_submission_id, created_at desc)
   where pet_submission_id is not null;
-
 alter table public.vote_credit_ledger enable row level security;
-
 drop policy if exists vote_credit_ledger_select_self on public.vote_credit_ledger;
 create policy vote_credit_ledger_select_self
   on public.vote_credit_ledger for select
@@ -41,13 +37,11 @@ create policy vote_credit_ledger_select_self
     auth.role() = 'service_role'
     or (auth.uid() is not null and user_id = auth.uid())
   );
-
 drop policy if exists vote_credit_ledger_service_writes on public.vote_credit_ledger;
 create policy vote_credit_ledger_service_writes
   on public.vote_credit_ledger for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
-
 -- ---------------------------------------------------------------------
 -- get_vote_credit_balance: convenience helper, sums the ledger.
 -- ---------------------------------------------------------------------
@@ -62,11 +56,9 @@ as $$
     from public.vote_credit_ledger
    where user_id = p_user_id;
 $$;
-
 revoke all on function public.get_vote_credit_balance(uuid) from public;
 grant execute on function public.get_vote_credit_balance(uuid)
   to authenticated, service_role;
-
 -- ---------------------------------------------------------------------
 -- spend_vote_credits: atomically debit the user's wallet and credit
 -- the pet's vote totals. Does NOT bump contest.current_amount_cents —
@@ -134,7 +126,6 @@ begin
   return v_balance - p_cents;
 end;
 $$;
-
 revoke all on function public.spend_vote_credits(uuid, uuid, integer) from public;
 grant execute on function public.spend_vote_credits(uuid, uuid, integer)
   to authenticated, service_role;

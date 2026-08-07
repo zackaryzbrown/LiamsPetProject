@@ -21,6 +21,5 @@ as $$
   where lower(email) = lower(p_email)
   limit 1;
 $$;
-
 revoke all on function public.find_user_id_by_email(text) from public;
 grant execute on function public.find_user_id_by_email(text) to service_role;

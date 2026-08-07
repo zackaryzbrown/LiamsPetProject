@@ -21,7 +21,6 @@ drop view if exists public.pet_leaderboard;
 drop table if exists public.vote_transactions cascade;
 drop table if exists public.webhook_events_raw cascade;
 drop type if exists public.vote_kind;
-
 -- ---------------------------------------------------------------------
 -- pet_submissions: drop Givebutter, add Pledge + denormalized totals
 -- ---------------------------------------------------------------------
@@ -29,11 +28,9 @@ drop type if exists public.vote_kind;
 -- givebutter_member_url (it required that column to be NULL on insert).
 -- A new pet_submissions_insert_owner policy is recreated below.
 drop policy if exists pet_submissions_insert_owner on public.pet_submissions;
-
 alter table public.pet_submissions
   drop column if exists givebutter_member_url,
   drop column if exists givebutter_member_id;
-
 alter table public.pet_submissions
   add column if not exists total_votes              integer not null default 0
     check (total_votes >= 0),
@@ -49,19 +46,15 @@ alter table public.pet_submissions
   add column if not exists pledge_mapping_key       text,
   -- Set when an entry donation has been matched via webhook.
   add column if not exists entry_pledge_transaction_id text;
-
 create unique index if not exists pet_submissions_pledge_mapping_key_uq
   on public.pet_submissions (pledge_mapping_key)
   where pledge_mapping_key is not null;
-
 create unique index if not exists pet_submissions_pledge_widget_id_uq
   on public.pet_submissions (pledge_widget_id)
   where pledge_widget_id is not null;
-
 create index if not exists pet_submissions_total_votes_idx
   on public.pet_submissions (total_votes desc)
   where status = 'approved';
-
 -- ---------------------------------------------------------------------
 -- pledge_donations
 --
@@ -77,7 +70,6 @@ do $$ begin
     'unknown'   -- received but could not be classified
   );
 exception when duplicate_object then null; end $$;
-
 create table if not exists public.pledge_donations (
   id                          uuid primary key default gen_random_uuid(),
   pet_submission_id           uuid references public.pet_submissions(id) on delete set null,
@@ -105,14 +97,12 @@ create table if not exists public.pledge_donations (
   created_at                  timestamptz not null default now(),
   constraint pledge_donations_transaction_id_uq unique (pledge_transaction_id)
 );
-
 create index if not exists pledge_donations_pet_idx
   on public.pledge_donations (pet_submission_id);
 create index if not exists pledge_donations_type_idx
   on public.pledge_donations (donation_type);
 create index if not exists pledge_donations_created_idx
   on public.pledge_donations (created_at desc);
-
 -- ---------------------------------------------------------------------
 -- pledge_webhook_events
 --
@@ -127,7 +117,6 @@ do $$ begin
     'failed'
   );
 exception when duplicate_object then null; end $$;
-
 create table if not exists public.pledge_webhook_events (
   id                  uuid primary key default gen_random_uuid(),
   pledge_event_id     text unique,
@@ -142,7 +131,6 @@ create table if not exists public.pledge_webhook_events (
   processed_at        timestamptz,
   created_at          timestamptz not null default now()
 );
-
 create index if not exists pledge_webhook_events_status_idx
   on public.pledge_webhook_events (processing_status);
 create index if not exists pledge_webhook_events_created_idx
@@ -150,7 +138,6 @@ create index if not exists pledge_webhook_events_created_idx
 create index if not exists pledge_webhook_events_unmapped_idx
   on public.pledge_webhook_events (created_at desc)
   where processing_status = 'unmapped';
-
 -- ---------------------------------------------------------------------
 -- manual_vote_audit
 --
@@ -171,10 +158,8 @@ create table if not exists public.manual_vote_audit (
   reason              text not null,
   created_at          timestamptz not null default now()
 );
-
 create index if not exists manual_vote_audit_pet_idx
   on public.manual_vote_audit (pet_submission_id, created_at desc);
-
 -- ---------------------------------------------------------------------
 -- Functions: increment_pet_votes + apply_manual_vote_adjustment
 -- ---------------------------------------------------------------------
@@ -198,10 +183,8 @@ begin
    where id = p_pet_id;
 end;
 $$;
-
 revoke all on function public.increment_pet_votes(uuid, integer, integer) from public;
 grant execute on function public.increment_pet_votes(uuid, integer, integer) to service_role;
-
 -- Records a manual vote adjustment + audit row in one transaction.
 -- Admin supplies dollars; votes_delta = floor(|cents|/100) with same sign.
 create or replace function public.apply_manual_vote_adjustment(
@@ -256,10 +239,8 @@ begin
   return v_audit;
 end;
 $$;
-
 revoke all on function public.apply_manual_vote_adjustment(uuid, uuid, integer, text) from public;
 grant execute on function public.apply_manual_vote_adjustment(uuid, uuid, integer, text) to service_role;
-
 -- ---------------------------------------------------------------------
 -- contest_settings: add Pledge-aware flags + running total
 -- (Keep legacy contest_open for compatibility; new code reads
@@ -270,33 +251,27 @@ alter table public.contest_settings
   add column if not exists voting_open         boolean not null default true,
   add column if not exists current_amount_cents integer not null default 0
     check (current_amount_cents >= 0);
-
 -- ---------------------------------------------------------------------
 -- RLS: lock down new tables
 -- ---------------------------------------------------------------------
 alter table public.pledge_donations         enable row level security;
 alter table public.pledge_webhook_events    enable row level security;
 alter table public.manual_vote_audit        enable row level security;
-
 drop policy if exists pledge_donations_select_admin on public.pledge_donations;
 create policy pledge_donations_select_admin on public.pledge_donations
   for select to authenticated
   using (public.is_admin(auth.uid()));
-
 drop policy if exists pledge_webhook_events_select_admin on public.pledge_webhook_events;
 create policy pledge_webhook_events_select_admin on public.pledge_webhook_events
   for select to authenticated
   using (public.is_admin(auth.uid()));
-
 drop policy if exists manual_vote_audit_select_admin on public.manual_vote_audit;
 create policy manual_vote_audit_select_admin on public.manual_vote_audit
   for select to authenticated
   using (public.is_admin(auth.uid()));
-
 -- Service-role writes only (no policies → only service_role bypasses RLS).
 grant select on public.pledge_donations, public.pledge_webhook_events, public.manual_vote_audit
   to authenticated;
-
 -- ---------------------------------------------------------------------
 -- Rewrite the pet_submissions insert policy: drop the obsolete
 -- givebutter_* checks since those columns no longer exist.

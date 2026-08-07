@@ -6,7 +6,6 @@
 
 create extension if not exists "pgcrypto";
 create extension if not exists "citext";
-
 -- ---------------------------------------------------------------------
 -- Enums
 -- ---------------------------------------------------------------------
@@ -18,18 +17,15 @@ do $$ begin
     'rejected'          -- rejected by admin
   );
 exception when duplicate_object then null; end $$;
-
 do $$ begin
   create type public.user_role as enum ('user', 'admin');
 exception when duplicate_object then null; end $$;
-
 do $$ begin
   -- 'entry' = $10 minimum entry donation (also counts as votes per spec, $1 = 1 vote)
   -- 'vote'  = post-approval donation routed to a pet's Givebutter member URL
   -- 'manual'= admin-entered correction (no Givebutter transaction)
   create type public.vote_kind as enum ('entry', 'vote', 'manual');
 exception when duplicate_object then null; end $$;
-
 -- ---------------------------------------------------------------------
 -- profiles  (1:1 with auth.users)
 -- ---------------------------------------------------------------------
@@ -40,10 +36,8 @@ create table if not exists public.profiles (
   role        public.user_role not null default 'user',
   created_at  timestamptz not null default now()
 );
-
 create index if not exists profiles_email_idx on public.profiles (email);
 create index if not exists profiles_role_idx  on public.profiles (role);
-
 -- ---------------------------------------------------------------------
 -- pet_submissions
 -- Note: total_votes is intentionally NOT denormalized. Use the
@@ -73,13 +67,11 @@ create table if not exists public.pet_submissions (
   constraint pet_submissions_pet_name_len check (char_length(pet_name) between 1 and 80),
   constraint pet_submissions_owner_name_len check (char_length(owner_name) between 1 and 120)
 );
-
 create index if not exists pet_submissions_user_idx        on public.pet_submissions (user_id);
 create index if not exists pet_submissions_status_idx      on public.pet_submissions (status);
 create index if not exists pet_submissions_approved_at_idx on public.pet_submissions (approved_at);
 create unique index if not exists pet_submissions_member_id_uq
   on public.pet_submissions (givebutter_member_id) where givebutter_member_id is not null;
-
 -- ---------------------------------------------------------------------
 -- vote_transactions
 -- Single source of truth for votes & donation totals. Idempotent via
@@ -100,11 +92,9 @@ create table if not exists public.vote_transactions (
   note                      text,
   created_at                timestamptz not null default now()
 );
-
 create index if not exists vote_transactions_pet_idx     on public.vote_transactions (pet_submission_id);
 create index if not exists vote_transactions_kind_idx    on public.vote_transactions (kind);
 create index if not exists vote_transactions_created_idx on public.vote_transactions (created_at desc);
-
 -- ---------------------------------------------------------------------
 -- webhook_events_raw
 -- Every inbound Givebutter webhook is logged here BEFORE processing
@@ -121,10 +111,8 @@ create table if not exists public.webhook_events_raw (
   error             text,
   received_at       timestamptz not null default now()
 );
-
 create index if not exists webhook_events_unmatched_idx
   on public.webhook_events_raw (received_at desc) where matched = false;
-
 -- ---------------------------------------------------------------------
 -- contest_settings (single-row table)
 -- ---------------------------------------------------------------------
@@ -137,9 +125,7 @@ create table if not exists public.contest_settings (
   updated_at          timestamptz not null default now(),
   constraint contest_settings_singleton check (id = 1)
 );
-
 insert into public.contest_settings (id) values (1) on conflict (id) do nothing;
-
 -- ---------------------------------------------------------------------
 -- Leaderboard view: approved pets with summed votes, ordered desc.
 -- ---------------------------------------------------------------------
@@ -159,7 +145,6 @@ left join public.vote_transactions v on v.pet_submission_id = p.id
 where p.status = 'approved'
 group by p.id
 order by total_votes desc, p.approved_at asc;
-
 -- ---------------------------------------------------------------------
 -- Helper: is_admin(uid) — used by RLS policies
 -- ---------------------------------------------------------------------
@@ -174,10 +159,8 @@ as $$
     select 1 from public.profiles where id = uid and role = 'admin'
   );
 $$;
-
 revoke all on function public.is_admin(uuid) from public;
 grant execute on function public.is_admin(uuid) to anon, authenticated;
-
 -- ---------------------------------------------------------------------
 -- Trigger: when a new auth.users row is created, ensure a profiles row
 -- exists. Admin promotion is performed by the Next.js auth callback
@@ -202,12 +185,10 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
-
 -- ---------------------------------------------------------------------
 -- promote_admin_by_email — invoked from the server (service role) at
 -- sign-in if the email is in ADMIN_EMAILS. Idempotent.
@@ -220,11 +201,9 @@ set search_path = public
 as $$
   update public.profiles set role = 'admin' where email = p_email and role <> 'admin';
 $$;
-
 revoke all on function public.promote_admin_by_email(citext) from public;
 -- Only the service role should call this.
 grant execute on function public.promote_admin_by_email(citext) to service_role;
-
 -- ---------------------------------------------------------------------
 -- updated_at maintenance for contest_settings
 -- ---------------------------------------------------------------------
@@ -232,7 +211,6 @@ create or replace function public.touch_updated_at()
 returns trigger language plpgsql as $$
 begin new.updated_at = now(); return new; end;
 $$;
-
 drop trigger if exists contest_settings_touch on public.contest_settings;
 create trigger contest_settings_touch
   before update on public.contest_settings
