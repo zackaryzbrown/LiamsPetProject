@@ -93,6 +93,9 @@ export const env = {
   //                               append to the donation URL so the
   //                               webhook can map a donation back to
   //                               the pet.
+  // PLEDGE_INTENT_SIGNING_SECRET: optional HMAC secret used for the
+  //                               short-lived vote-intent tokens we
+  //                               append to secure donation-start links.
   // -------------------------------------------------------------------
   get PLEDGE_API_KEY() {
     return optional("PLEDGE_API_KEY");
@@ -120,5 +123,8 @@ export const env = {
   },
   get PLEDGE_SUBMISSION_FIELD_KEY() {
     return process.env.PLEDGE_SUBMISSION_FIELD_KEY ?? "submission_id";
+  },
+  get PLEDGE_INTENT_SIGNING_SECRET() {
+    return optional("PLEDGE_INTENT_SIGNING_SECRET");
   },
 };

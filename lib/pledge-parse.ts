@@ -61,6 +61,7 @@ export type ParsedPledgeDonation = {
   donorName: string | null;
   donorEmail: string | null;
   // Mapping signals (priority order, strongest first).
+  intentToken: string | null;
   customSubmissionId: string | null;
   mappingKey: string | null;
   widgetId: string | null;
@@ -165,6 +166,10 @@ export function parsePledgeWebhook(body: Json): ParsedPledgeDonation {
     getString(t, `meta.${SUBMISSION_FIELD_KEY}`) ??
     null;
 
+  const intentToken =
+    readCustomField(t, "intent_token") ??
+    getString(t, "intent_token", "metadata.intent_token", "meta.intent_token");
+
   const mappingKey =
     readCustomField(t, "mapping_key") ??
     getString(t, "mapping_key", "metadata.mapping_key");
@@ -193,6 +198,7 @@ export function parsePledgeWebhook(body: Json): ParsedPledgeDonation {
     currency: currency.toUpperCase(),
     donorName,
     donorEmail,
+    intentToken,
     customSubmissionId,
     mappingKey,
     widgetId,

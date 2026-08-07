@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getContestWindowSettings, votingOpenNow } from "@/lib/contest-state";
 
 // =====================================================================
@@ -53,8 +52,7 @@ export async function spendVoteCreditsAction(
     };
   }
 
-  const admin = createAdminClient();
-  const { data: remaining, error } = await admin.rpc("spend_vote_credits", {
+  const { data: remaining, error } = await supabase.rpc("spend_vote_credits", {
     p_user_id: user.id,
     p_pet_submission_id: parsed.data.petSubmissionId,
     p_cents: parsed.data.votes * 100,

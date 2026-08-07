@@ -11,3 +11,4 @@ dist
 .refact/buddy/runtime_queue.jsonl
 .refact/buddy/state.json
 .refact/buddy/memory_ops.jsonl
+supabase/.temp

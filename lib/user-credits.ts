@@ -1,4 +1,5 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import "server-only";
+import { createClient } from "@/lib/supabase/server";
 
 // =====================================================================
 // Vote-credit wallet — read-only helpers.
@@ -15,8 +16,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // =====================================================================
 
 export async function getCreditBalanceCents(userId: string): Promise<number> {
-  const admin = createAdminClient();
-  const { data, error } = await admin.rpc("get_vote_credit_balance", {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_vote_credit_balance", {
     p_user_id: userId,
   });
   if (error) return 0;
@@ -36,8 +37,8 @@ export async function getCreditHistory(
   userId: string,
   limit = 50,
 ): Promise<CreditLedgerEntry[]> {
-  const admin = createAdminClient();
-  const { data } = await admin
+  const supabase = await createClient();
+  const { data } = await supabase
     .from("vote_credit_ledger")
     .select(
       "id, delta_cents, created_at, reason, pet_submission_id, pet_submissions(pet_name)",

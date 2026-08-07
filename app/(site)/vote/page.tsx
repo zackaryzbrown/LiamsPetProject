@@ -11,7 +11,19 @@ import { ArrowRight } from "lucide-react";
 export const metadata = { title: "Vote with a donation" };
 export const dynamic = "force-dynamic";
 
-export default async function VotePage() {
+const VOTE_ERRORS: Record<string, string> = {
+  voting_closed: "Voting is currently closed.",
+  pet_not_found: "That pet is no longer available for voting.",
+  vote_intent_failed: "We couldn't prepare a secure vote session. Please try again.",
+  donation_link_missing: "That pet doesn't have a donation link configured yet.",
+};
+
+export default async function VotePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
   const [contest, pets, { data: { user } }] = await Promise.all([
     getPublicContest(),
@@ -62,6 +74,11 @@ export default async function VotePage() {
           {!contest && (
             <p className="mt-3 max-w-xl rounded-xl border-2 border-ember-500 bg-ember-50 px-4 py-3 text-sm text-ember-700">
               Live contest totals are temporarily unavailable.
+            </p>
+          )}
+          {error && VOTE_ERRORS[error] && (
+            <p className="mt-3 max-w-xl rounded-xl border-2 border-ember-500 bg-ember-50 px-4 py-3 text-sm text-ember-700">
+              {VOTE_ERRORS[error]}
             </p>
           )}
         </header>

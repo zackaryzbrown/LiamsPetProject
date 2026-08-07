@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getContestWindowSettings, votingOpenNow } from "@/lib/contest-state";
 
 // =====================================================================
@@ -13,8 +12,8 @@ import { getContestWindowSettings, votingOpenNow } from "@/lib/contest-state";
 // donor email when Pledge's payload doesn't include submission_id /
 // utm_content (which is the case for hosted-fundraiser donations).
 //
-// Anonymous voters are allowed: we still record the intent with a null
-// user_id but require an email so the webhook has something to match.
+// Vote intents now require an authenticated user so the fallback email
+// mapping can only point at a verified account.
 // =====================================================================
 const InputSchema = z.object({
   petSubmissionId: z.string().uuid(),
@@ -38,34 +37,28 @@ export async function recordVoteIntent(
     return { ok: false, error: "Voting is currently closed." };
   }
 
-  // Prefer the email of the logged-in user when available; fall back to
-  // whatever email the visitor typed (e.g. an anonymous voter).
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const donorEmail =
-    user?.email?.toLowerCase().trim() ??
-    parsed.data.donorEmail?.toLowerCase().trim() ??
-    null;
+  const donorEmail = user?.email?.toLowerCase().trim() ?? null;
+  if (!user || !donorEmail) {
+    return { ok: false, error: "Please sign in before donating to vote." };
+  }
 
-  // Confirm the pet exists and is voteable. We don't enforce
-  // "approved-only" here because the same intent path is reused if we
-  // ever offer a "donate before approval" flow; the webhook only
-  // applies vote credits after entry_donation_confirmed=true anyway.
-  const admin = createAdminClient();
-  const { data: pet } = await admin
+  const { data: pet } = await supabase
     .from("pet_submissions")
     .select("id")
     .eq("id", parsed.data.petSubmissionId)
+    .eq("status", "approved")
     .maybeSingle();
   if (!pet) {
     return { ok: false, error: "Pet not found." };
   }
 
-  const { error } = await admin.from("donation_intents").insert({
+  const { error } = await supabase.from("donation_intents").insert({
     pet_submission_id: parsed.data.petSubmissionId,
-    user_id: user?.id ?? null,
+    user_id: user.id,
     donor_email: donorEmail,
     intent_type: "vote",
   });

@@ -4,11 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  classifyDonationType,
-  parsePledgeWebhook,
-  votesFromAmountCents,
-} from "@/lib/pledge-parse";
+import { parsePledgeWebhook } from "@/lib/pledge-parse";
 
 export type ReconcileResult =
   | { ok: true; message?: string }
@@ -17,9 +13,9 @@ export type ReconcileResult =
 // =====================================================================
 // Manually link an unmapped pledge_webhook_events row to a pet.
 //
-// We re-parse the saved raw payload, upsert into pledge_donations,
-// bump pet totals via increment_pet_votes, and mark the event row as
-// processed. Idempotent on pledge_event_id thanks to the unique index.
+// We re-parse the saved raw payload and hand the work to the same DB
+// function the live webhook uses, so reconciliation follows the exact
+// same entry/vote/ledger rules as production traffic.
 // =====================================================================
 const LinkSchema = z.object({
   eventRowId: z.string().uuid(),
@@ -54,57 +50,28 @@ export async function linkWebhookToPet(formData: FormData): Promise<ReconcileRes
   }
 
   const eventIdForDb = re.eventId ?? row.pledge_event_id ?? re.transactionId ?? row.id;
-  const voteCredits = votesFromAmountCents(re.amountCents);
-  const donationType = classifyDonationType(re.eventType, true);
-
-  const { data: donationRow, error: donationErr } = await admin
-    .from("pledge_donations")
-    .upsert(
-      {
-        pet_submission_id: parsed.data.petSubmissionId,
-        pledge_event_id: eventIdForDb,
-        pledge_transaction_id: re.transactionId,
-        pledge_campaign_id: re.campaignId,
-        pledge_widget_id: re.widgetId,
-        pledge_fundraiser_id: re.fundraiserId,
-        pledge_mapping_key: re.mappingKey,
-        donor_name: re.donorName,
-        donor_email: re.donorEmail,
-        amount_cents: re.amountCents,
-        tip_cents: re.tipCents,
-        fee_cents: re.feeCents,
-        currency: re.currency,
-        vote_credits: voteCredits,
-        donation_type: donationType,
-        raw_payload: payload as never,
-        processed_at: new Date().toISOString(),
-      },
-      { onConflict: "pledge_event_id", ignoreDuplicates: false },
-    )
-    .select("id")
-    .single();
-  if (donationErr) return { ok: false, error: donationErr.message };
-
-  if (voteCredits > 0) {
-    const { error: rpcErr } = await admin.rpc("increment_pet_votes", {
-      p_pet_id: parsed.data.petSubmissionId,
-      p_votes: voteCredits,
-      p_cents: re.amountCents,
-    });
-    if (rpcErr) return { ok: false, error: rpcErr.message };
-  }
-
-  const { error: updErr } = await admin
-    .from("pledge_webhook_events")
-    .update({
-      processing_status: "processed",
-      pet_submission_id: parsed.data.petSubmissionId,
-      donation_id: donationRow?.id ?? null,
-      processed_at: new Date().toISOString(),
-      error_message: null,
-    })
-    .eq("id", parsed.data.eventRowId);
-  if (updErr) return { ok: false, error: updErr.message };
+  const { error: rpcErr } = await admin.rpc("process_pledge_donation", {
+    p_pledge_event_id: eventIdForDb,
+    p_event_type: re.eventType,
+    p_signature_verified: true,
+    p_raw_payload: payload as never,
+    p_raw_headers: {} as never,
+    p_pet_submission_id: parsed.data.petSubmissionId,
+    p_matched_intent_id: null,
+    p_pledge_transaction_id: re.transactionId,
+    p_pledge_campaign_id: re.campaignId,
+    p_pledge_widget_id: re.widgetId,
+    p_pledge_fundraiser_id: re.fundraiserId,
+    p_pledge_mapping_key: re.mappingKey,
+    p_donor_name: re.donorName,
+    p_donor_email: re.donorEmail,
+    p_amount_cents: re.amountCents,
+    p_tip_cents: re.tipCents,
+    p_fee_cents: re.feeCents,
+    p_currency: re.currency,
+    p_error_message: null,
+  });
+  if (rpcErr) return { ok: false, error: rpcErr.message };
 
   revalidatePath("/admin/reconciliation");
   revalidatePath(`/admin/submissions/${parsed.data.petSubmissionId}`);

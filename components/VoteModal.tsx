@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { PublicPet } from "@/lib/public-data";
-import { recordVoteIntent } from "@/app/(site)/vote/actions";
 import { spendVoteCreditsAction } from "@/app/(site)/account/actions";
 import { ArrowUpRight, Heart, Loader2, ShieldCheck, Wallet } from "lucide-react";
 
@@ -57,7 +56,6 @@ export function VoteModal({
   votingOpen = true,
 }: Props) {
   const router = useRouter();
-  const [email, setEmail] = React.useState(userEmail ?? "");
   const [pending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
 
@@ -75,11 +73,10 @@ export function VoteModal({
     if (!open) {
       setError(null);
     } else {
-      setEmail(userEmail ?? "");
       setMode(canSpendCredits ? "credits" : "donate");
       setCreditVotes(canSpendCredits ? String(Math.min(5, maxCreditVotes)) : "1");
     }
-  }, [open, userEmail, canSpendCredits, maxCreditVotes]);
+  }, [open, canSpendCredits, maxCreditVotes]);
 
   const donationUrl = pet.pledgeDonationUrl;
 
@@ -89,29 +86,9 @@ export function VoteModal({
       return;
     }
     if (!donationUrl) return;
-    const trimmed = email.trim();
-    // Permissive email check: anything resembling "x@y.z" where each segment
-    // contains at least one non-whitespace, non-@ character. We let Pledge.to
-    // do the real validation — we just need *something* to attribute against.
-    if (trimmed.length === 0 || !/^\S+@\S+\.\S+$/.test(trimmed)) {
-      setError("Please enter the email you'll use on Pledge.to.");
-      return;
-    }
     setError(null);
-    startTransition(async () => {
-      const result = await recordVoteIntent({
-        petSubmissionId: pet.id,
-        donorEmail: trimmed,
-      });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      // Open Pledge in a new tab — the intent row will live in our DB
-      // for 60 minutes while the donor completes the donation.
-      window.open(donationUrl, "_blank", "noopener,noreferrer");
-      onOpenChange(false);
-    });
+    window.open(donationUrl, "_blank", "noopener,noreferrer");
+    onOpenChange(false);
   }
 
   function handleSpendCredits() {
@@ -277,39 +254,32 @@ export function VoteModal({
               </>
             ) : donationUrl ? (
               <>
-                {userEmail ? (
-                  <div className="grid gap-2">
-                    <Label>Email on Pledge.to</Label>
-                    <div className="rounded-xl border-2 border-ink bg-cream-100 px-3 py-2 text-sm font-semibold">
-                      {userEmail}
-                    </div>
-                    <p className="text-xs text-ink-muted">
-                      Use this exact email when checking out on Pledge.to
-                      so we can credit your account.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
-                    <Label htmlFor="voterEmail">
-                      Email you&apos;ll use on Pledge.to
-                    </Label>
-                    <Input
-                      id="voterEmail"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      disabled={pending}
-                    />
-                    <p className="text-xs text-ink-muted">
-                      We use this to match your donation back to{" "}
-                      {pet.petName}. Use the same email when checking out
-                      on Pledge.to.
-                    </p>
-                  </div>
-                )}
+                <div className="rounded-xl border-2 border-ink bg-cream-50 px-3 py-2 text-sm">
+                  {userEmail ? (
+                    <>
+                      <p className="font-semibold">
+                        Secure vote checkout for {userEmail}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-muted">
+                        We&apos;ll open a signed vote link and ask Pledge.to
+                        to keep this donation attached to {pet.petName}.
+                        Use the same email at checkout for the strongest
+                        attribution path.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold">
+                        Sign-in required before checkout
+                      </p>
+                      <p className="mt-1 text-xs text-ink-muted">
+                        We&apos;ll send you through a secure vote-start page
+                        first so your donation can be tied back to this pet
+                        without relying on a typed email alone.
+                      </p>
+                    </>
+                  )}
+                </div>
                 {error && (
                   <p
                     role="alert"
@@ -323,14 +293,10 @@ export function VoteModal({
                   variant="ember"
                   size="lg"
                   onClick={handleDonate}
-                  disabled={pending || !votingOpen}
+                  disabled={!votingOpen}
                 >
-                  {pending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ArrowUpRight className="h-4 w-4" />
-                  )}
-                  {pending ? "Opening Pledge…" : "Donate on Pledge.to"}
+                  <ArrowUpRight className="h-4 w-4" />
+                  Donate on Pledge.to
                 </Button>
               </>
             ) : (

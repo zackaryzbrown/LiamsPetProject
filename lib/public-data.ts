@@ -18,8 +18,9 @@ export type PublicPet = {
   totalVotes: number;
   totalDonatedCents: number;
   approvedAt: string;
-  // Pre-built donate-to-vote URL. May be null if Pledge.to links haven't
-  // been configured (per pet) AND no fallback default is set.
+  // Secure vote-start URL. The route records an authenticated vote
+  // intent before redirecting out to Pledge.to. May be null if neither
+  // a per-pet URL nor a global fallback donation URL is configured.
   pledgeDonationUrl: string | null;
 };
 

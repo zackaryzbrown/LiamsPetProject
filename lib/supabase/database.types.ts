@@ -351,6 +351,30 @@ export type Database = {
         Args: { p_email: string };
         Returns: string | null;
       };
+      process_pledge_donation: {
+        Args: {
+          p_pledge_event_id: string;
+          p_event_type: string | null;
+          p_signature_verified: boolean;
+          p_raw_payload: Json;
+          p_raw_headers: Json;
+          p_pet_submission_id: string | null;
+          p_matched_intent_id: string | null;
+          p_pledge_transaction_id: string | null;
+          p_pledge_campaign_id: string | null;
+          p_pledge_widget_id: string | null;
+          p_pledge_fundraiser_id: string | null;
+          p_pledge_mapping_key: string | null;
+          p_donor_name: string | null;
+          p_donor_email: string | null;
+          p_amount_cents: number;
+          p_tip_cents: number;
+          p_fee_cents: number;
+          p_currency: string | null;
+          p_error_message?: string | null;
+        };
+        Returns: Json;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
