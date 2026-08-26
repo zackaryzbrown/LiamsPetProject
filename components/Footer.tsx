@@ -3,7 +3,7 @@ import { PawMark } from "./PawMark";
 
 export function Footer() {
   const year = new Date().getFullYear();
-  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.org";
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "smittyliam@gmail.com";
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
   return (
     <footer className="relative bg-royal-700 text-cream border-t-2 border-ink mt-24">

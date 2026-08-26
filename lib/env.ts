@@ -54,7 +54,7 @@ export const env = {
     );
   },
   get NEXT_PUBLIC_CONTACT_EMAIL() {
-    return process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.org";
+    return process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "smittyliam@gmail.com";
   },
 
   // Server-only

@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-display",
-  axes: ["SOFT", "opsz"],
-});
-const manrope = Manrope({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -41,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
+    <html lang="en">
       <body className="min-h-screen flex flex-col" suppressHydrationWarning>
         {children}
         <Analytics />

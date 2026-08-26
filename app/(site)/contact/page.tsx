@@ -5,7 +5,7 @@ import { ContactForm } from "./ContactForm";
 export const metadata = { title: "Contact" };
 
 export default function ContactPage() {
-  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.org";
+  const email = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "smittyliam@gmail.com";
   return (
     <section className="container py-16 md:py-24 grid gap-10 lg:grid-cols-2">
       <header>
@@ -30,8 +30,8 @@ export default function ContactPage() {
           </div>
         </a>
         <p className="mt-6 text-sm text-ink-muted max-w-md">
-          Prefer email? Either way works — the form sends straight to us, no inbox-hop
-          required.
+          Liam leads this project but does not regularly monitor email, so the contact form is the
+          best way to reach the team.
         </p>
       </header>
 

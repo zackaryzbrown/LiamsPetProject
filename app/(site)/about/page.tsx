@@ -26,6 +26,15 @@ export default function AboutPage() {
             how Liam is showing up.
           </p>
         </div>
+        <div className="mt-10 rounded-2xl border-2 border-ink bg-ember-50 p-6 shadow-card-sm">
+          <p className="eyebrow text-royal-700">Contest prizes</p>
+          <p className="mt-2 font-display text-2xl font-black">
+            First place: $50 · Second place: $25 · Third place: $10
+          </p>
+          <p className="mt-2 text-ink-muted">
+            Winners choose a pet shop for their prize. Voting closes September 20.
+          </p>
+        </div>
       </section>
 
       <WaveDivider direction="down" className="text-ink" />
