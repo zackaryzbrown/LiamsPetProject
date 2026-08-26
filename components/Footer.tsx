@@ -3,7 +3,8 @@ import { PawMark } from "./PawMark";
 
 export function Footer() {
   const year = new Date().getFullYear();
-  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "smittyliam@gmail.com";
+  const contactEmail =
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "smittyliam@gmail.com";
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
   return (
     <footer className="relative bg-royal-700 text-cream border-t-2 border-ink mt-24">
@@ -19,17 +20,33 @@ export function Footer() {
           </div>
           <p className="mt-4 max-w-md text-cream/85">
             A pet-photo fundraiser benefiting{" "}
-            <span className="font-semibold text-white">Soul Dog Rescue</span>. A community service
-            project by Liam &amp; Mile High Karate.
+            <span className="font-semibold text-white">Soul Dog Rescue</span>. A
+            community service project by Liam &amp; Mile High Karate.
           </p>
         </div>
         <div>
           <h4 className="eyebrow text-ember-200/90">Explore</h4>
           <ul className="mt-3 space-y-2 text-cream/90">
-            <li><Link href="/vote" className="hover:underline">Vote</Link></li>
-            <li><Link href="/enter" className="hover:underline">Enter your pet</Link></li>
-            <li><Link href="/about" className="hover:underline">About the cause</Link></li>
-            <li><Link href="/rules" className="hover:underline">Rules / FAQ</Link></li>
+            <li>
+              <Link href="/vote" className="hover:underline">
+                Vote
+              </Link>
+            </li>
+            <li>
+              <Link href="/enter" className="hover:underline">
+                Enter your pet
+              </Link>
+            </li>
+            <li>
+              <Link href="/about" className="hover:underline">
+                About the cause
+              </Link>
+            </li>
+            <li>
+              <Link href="/rules" className="hover:underline">
+                Rules / FAQ
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
@@ -40,7 +57,11 @@ export function Footer() {
                 {contactEmail}
               </a>
             </li>
-            <li><Link href="/contact" className="hover:underline">Contact form</Link></li>
+            <li>
+              <Link href="/contact" className="hover:underline">
+                Contact form
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
@@ -59,7 +80,9 @@ export function Footer() {
                 </a>
               </p>
             )}
-            <p className="italic">Donations are not refundable. $1 donated = 1 vote.</p>
+            <p className="italic">
+              Donations are not refundable. $1 donated = 1 vote.
+            </p>
           </div>
         </div>
       </div>

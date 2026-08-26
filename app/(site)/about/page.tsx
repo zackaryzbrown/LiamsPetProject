@@ -11,19 +11,21 @@ export default function AboutPage() {
       <section className="container py-16 md:py-24">
         <p className="eyebrow text-royal-700">About</p>
         <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight max-w-3xl">
-          A karate kid raising <span className="italic text-ember-500">$500</span> for shelter
-          dogs.
+          A karate kid raising{" "}
+          <span className="italic text-ember-500">$500</span> for shelter dogs.
         </h1>
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <p className="text-lg text-ink/85 leading-relaxed">
-            This fundraiser benefits <strong>Soul Dog Rescue</strong>, a local nonprofit that pulls
-            dogs from overcrowded shelters and matches them with adopters who&apos;ll love them
-            forever. Every dollar pays for transport, vet care, and food.
+            This fundraiser benefits <strong>Soul Dog Rescue</strong>, a local
+            nonprofit that pulls dogs from overcrowded shelters and matches them
+            with adopters who&apos;ll love them forever. Every dollar pays for
+            transport, vet care, and food.
           </p>
           <p className="text-lg text-ink/85 leading-relaxed">
-            It&apos;s also <strong>Liam&apos;s community service project</strong> through Mile High
-            Karate. Black belt requirements include showing up for your community, and this is
-            how Liam is showing up.
+            It&apos;s also{" "}
+            <strong>Liam&apos;s community service project</strong> through Mile
+            High Karate. Black belt requirements include showing up for your
+            community, and this is how Liam is showing up.
           </p>
         </div>
         <div className="mt-10 rounded-2xl border-2 border-ink bg-ember-50 p-6 shadow-card-sm">
@@ -32,7 +34,8 @@ export default function AboutPage() {
             First place: $50 · Second place: $25 · Third place: $10
           </p>
           <p className="mt-2 text-ink-muted">
-            Winners choose a pet shop for their prize. Voting closes September 20.
+            Winners choose a pet shop for their prize. Voting closes September
+            20.
           </p>
         </div>
       </section>

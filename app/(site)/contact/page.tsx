@@ -14,8 +14,8 @@ export default function ContactPage() {
           Get in <span className="italic text-ember-500">touch</span>.
         </h1>
         <p className="mt-5 text-ink-muted text-lg max-w-md">
-          Questions about the contest, your submission, or Soul Dog Rescue? Send us a note and
-          we&apos;ll get back to you.
+          Questions about the contest, your submission, or Soul Dog Rescue? Send
+          us a note and we&apos;ll get back to you.
         </p>
         <a
           href={`mailto:${email}`}
@@ -30,8 +30,8 @@ export default function ContactPage() {
           </div>
         </a>
         <p className="mt-6 text-sm text-ink-muted max-w-md">
-          Liam leads this project but does not regularly monitor email, so the contact form is the
-          best way to reach the team.
+          Liam leads this project but does not regularly monitor email, so the
+          contact form is the best way to reach the team.
         </p>
       </header>
 
