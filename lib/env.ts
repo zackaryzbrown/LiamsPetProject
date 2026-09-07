@@ -48,10 +48,7 @@ export const env = {
     return required("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   },
   get NEXT_PUBLIC_SITE_URL() {
-    return (
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      "https://main.derbbj6vexl0w.amplifyapp.com"
-    );
+    return process.env.NEXT_PUBLIC_SITE_URL ?? "https://cutepetshowdown.com";
   },
   get NEXT_PUBLIC_CONTACT_EMAIL() {
     return process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "smittyliam@gmail.com";

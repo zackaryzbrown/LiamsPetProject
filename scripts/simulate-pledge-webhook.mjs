@@ -21,15 +21,15 @@ import crypto from "node:crypto";
 
 const [, , submissionId, amountArg, typeArg] = process.argv;
 if (!submissionId) {
-  console.error("Missing <submission_id>. Pass the UUID from the /enter redirect URL.");
+  console.error(
+    "Missing <submission_id>. Pass the UUID from the /enter redirect URL.",
+  );
   process.exit(1);
 }
 
 const targetUrl =
-  process.env.TARGET_URL ??
-  "https://main.derbbj6vexl0w.amplifyapp.com/api/webhooks/pledge";
-const secret =
-  process.env.PLEDGE_WEBHOOK_SECRET ?? process.env.PLEDGE_API_KEY;
+  process.env.TARGET_URL ?? "https://cutepetshowdown.com/api/webhooks/pledge";
+const secret = process.env.PLEDGE_WEBHOOK_SECRET ?? process.env.PLEDGE_API_KEY;
 if (!secret) {
   console.error("Set PLEDGE_WEBHOOK_SECRET (or PLEDGE_API_KEY) in the env.");
   process.exit(1);
@@ -49,7 +49,7 @@ const payload = {
   created_at: new Date().toISOString(),
   data: {
     id: txId,
-    amount: amountCents,            // cents
+    amount: amountCents, // cents
     tip_amount: 0,
     fee_amount: 0,
     currency: "USD",
@@ -75,7 +75,9 @@ const signature = crypto
 console.log(`POST ${targetUrl}`);
 console.log(`  event:        ${eventType}`);
 console.log(`  submission:   ${submissionId}`);
-console.log(`  amount:       $${(amountCents / 100).toFixed(2)} (${amountCents} cents)`);
+console.log(
+  `  amount:       $${(amountCents / 100).toFixed(2)} (${amountCents} cents)`,
+);
 console.log(`  pledge_event: ${eventId}`);
 console.log(`  signature:    sha256=${signature.slice(0, 16)}…`);
 

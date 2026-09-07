@@ -37,8 +37,8 @@ export default function AboutPage() {
             First place: $50 · Second place: $25 · Third place: $10
           </p>
           <p className="mt-2 text-ink-muted">
-            Winners choose a pet shop for their prize. Voting closes September
-            20.
+            Winners choose between cash or a gift card to a pet shop of their
+            choosing. Voting closes September 26.
           </p>
         </div>
       </section>

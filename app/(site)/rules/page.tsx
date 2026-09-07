@@ -69,7 +69,7 @@ const RULES: { q: string; a: React.ReactNode }[] = [
     q: "When does voting close?",
     a: (
       <>
-        Voting closes September 20, 2026. After the deadline, the leaderboard is
+        Voting closes September 26, 2026. After the deadline, the leaderboard is
         final.
       </>
     ),
@@ -79,7 +79,8 @@ const RULES: { q: string; a: React.ReactNode }[] = [
     a: (
       <>
         First place receives $50, second place receives $25, and third place
-        receives $10. Each winner may choose a pet shop for their prize.
+        receives $10. Each winner may choose between cash or a gift card to a
+        pet shop of their choosing.
       </>
     ),
   },

@@ -11,8 +11,7 @@ export const metadata: Metadata = {
   description:
     "A pet photo contest benefiting Soul Dog Rescue. Liam Smith & Santiago Garcia's Mile High Karate community service project. $1 donated = 1 vote.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ??
-      "https://main.derbbj6vexl0w.amplifyapp.com",
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://cutepetshowdown.com",
   ),
   openGraph: {
     title: "Pets for Pups: A Soul Dog Rescue Fundraiser",

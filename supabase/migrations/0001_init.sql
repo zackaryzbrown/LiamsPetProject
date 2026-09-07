@@ -119,8 +119,8 @@ create index if not exists webhook_events_unmatched_idx
 create table if not exists public.contest_settings (
   id                  smallint primary key default 1,
   contest_open        boolean not null default true,
-  submission_deadline timestamptz not null default '2026-09-20 23:59:00-06',
-  voting_deadline     timestamptz not null default '2026-09-20 23:59:00-06',
+  submission_deadline timestamptz not null default '2026-09-26 23:59:00-06',
+  voting_deadline     timestamptz not null default '2026-09-26 23:59:00-06',
   goal_amount_cents   integer not null default 50000 check (goal_amount_cents >= 0),
   updated_at          timestamptz not null default now(),
   constraint contest_settings_singleton check (id = 1)
