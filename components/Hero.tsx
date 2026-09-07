@@ -22,6 +22,7 @@ function shortDate(iso: string | null): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
+    timeZone: "America/Denver",
   }).format(d);
 }
 

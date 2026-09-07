@@ -7,7 +7,11 @@ type Props = {
   className?: string;
 };
 
-export function ContestStatusBadge({ contestOpen, votingDeadline, className }: Props) {
+export function ContestStatusBadge({
+  contestOpen,
+  votingDeadline,
+  className,
+}: Props) {
   const deadline = new Date(votingDeadline);
   const open = contestOpen && Date.now() < deadline.getTime();
   const fmt = new Intl.DateTimeFormat("en-US", {
@@ -15,6 +19,7 @@ export function ContestStatusBadge({ contestOpen, votingDeadline, className }: P
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "America/Denver",
   }).format(deadline);
 
   return (
@@ -23,7 +28,7 @@ export function ContestStatusBadge({ contestOpen, votingDeadline, className }: P
         <span
           className={cn(
             "h-2 w-2 rounded-full",
-            open ? "bg-white animate-pulse" : "bg-cream-200"
+            open ? "bg-white animate-pulse" : "bg-cream-200",
           )}
         />
         {open ? "Voting open" : "Voting closed"}
