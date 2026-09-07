@@ -108,7 +108,8 @@ export function Hero({
             Submit your pet, share their best photo, and let the public vote
             with donations to{" "}
             <span className="font-semibold text-white">Soul Dog Rescue</span>.
-            It&apos;s Liam&apos;s Mile High Karate community service project.
+            It&apos;s Liam Smith &amp; Santiago Garcia&apos;s Mile High Karate
+            community service project.
           </p>
 
           <div

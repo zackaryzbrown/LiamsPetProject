@@ -21,7 +21,8 @@ export function Footer() {
           <p className="mt-4 max-w-md text-cream/85">
             A pet-photo fundraiser benefiting{" "}
             <span className="font-semibold text-white">Soul Dog Rescue</span>. A
-            community service project by Liam &amp; Mile High Karate.
+            community service project by Liam Smith &amp; Santiago Garcia, Mile
+            High Karate.
           </p>
         </div>
         <div>

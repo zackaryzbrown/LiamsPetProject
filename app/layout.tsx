@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s · Pets for Pups",
   },
   description:
-    "A pet photo contest benefiting Soul Dog Rescue. Liam's Mile High Karate community service project. $1 donated = 1 vote.",
+    "A pet photo contest benefiting Soul Dog Rescue. Liam Smith & Santiago Garcia's Mile High Karate community service project. $1 donated = 1 vote.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ??
       "https://main.derbbj6vexl0w.amplifyapp.com",

@@ -23,9 +23,12 @@ export default function AboutPage() {
           </p>
           <p className="text-lg text-ink/85 leading-relaxed">
             It&apos;s also{" "}
-            <strong>Liam&apos;s community service project</strong> through Mile
-            High Karate. Black belt requirements include showing up for your
-            community, and this is how Liam is showing up.
+            <strong>
+              Liam Smith &amp; Santiago Garcia&apos;s community service project
+            </strong>{" "}
+            through Mile High Karate. Black belt requirements include showing up
+            for your community, and this is how Liam Smith and Santiago Garcia
+            are showing up.
           </p>
         </div>
         <div className="mt-10 rounded-2xl border-2 border-ink bg-ember-50 p-6 shadow-card-sm">
@@ -50,10 +53,10 @@ export default function AboutPage() {
             },
             {
               k: "Mile High Karate",
-              v: "Liam's dojo. Discipline, respect, and giving back to the community.",
+              v: "Liam Smith & Santiago Garcia's dojo. Discipline, respect, and giving back to the community.",
             },
             {
-              k: "Liam's Project",
+              k: "Liam Smith & Santiago Garcia's Project",
               v: "Raising $500 for shelter dogs through pet photo voting.",
             },
           ].map((b) => (

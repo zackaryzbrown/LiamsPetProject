@@ -30,8 +30,8 @@ export default function ContactPage() {
           </div>
         </a>
         <p className="mt-6 text-sm text-ink-muted max-w-md">
-          Liam leads this project but does not regularly monitor email, so the
-          contact form is the best way to reach the team.
+          Liam Smith and Santiago Garcia lead this project but do not regularly
+          monitor email, so the contact form is the best way to reach the team.
         </p>
       </header>
 
