@@ -82,8 +82,8 @@ export function EnterPetForm({ action, accountEmail }: Props) {
             className="bg-cream-100 cursor-not-allowed"
           />
           <p className="text-xs text-ink-muted">
-            We use your account email so your entry donation credits back to
-            your wallet. Use this same email on Pledge.to.
+            We use your account email to save any extra entry dollars as saved
+            votes. Use this same email on Pledge.to.
           </p>
         </div>
       </div>
@@ -153,8 +153,9 @@ export function EnterPetForm({ action, accountEmail }: Props) {
             className="mt-1 h-5 w-5 rounded border-2 border-ink"
           />
           <span>
-            I understand the $10 entry donation goes to Soul Dog Rescue via{" "}
-            <strong>Pledge.to</strong> and is non-refundable.
+            I understand I must donate at least $10 on Pledge.to to submit this
+            pet. The first $10 is the non-refundable entry donation; every whole
+            dollar above $10 becomes a saved vote in my account.
           </span>
         </label>
       </div>
@@ -179,8 +180,8 @@ export function EnterPetForm({ action, accountEmail }: Props) {
           )}
         </Button>
         <p className="text-sm text-ink-muted">
-          At checkout: $10 enters your pet; every whole dollar above $10 becomes
-          a vote credit.
+          Choose $10 or more at checkout. $10 submits your pet; extra whole
+          dollars become vote votes you can save for later.
         </p>
       </div>
 

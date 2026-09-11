@@ -24,7 +24,9 @@ export default async function LoginPage({
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const next = sanitizeNextPath(sp.next, "/enter");
   if (user) redirect(next);
 
@@ -34,11 +36,12 @@ export default async function LoginPage({
     <section className="container py-20 md:py-28 max-w-xl">
       <p className="eyebrow text-royal-700">Sign in</p>
       <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight">
-        Sign in to <span className="italic text-ember-500">enter your pet</span>.
+        Sign in to <span className="italic text-ember-500">enter your pet</span>
+        .
       </h1>
       <p className="mt-4 text-ink-muted">
-        We use Google sign-in for pet submitters so we can attach your submission to your
-        account. Voters do not need an account.
+        Sign in to submit a pet or donate a vote. It lets us safely attach your
+        entry or vote to the right pet.
       </p>
 
       <Card className="mt-8">
@@ -64,7 +67,8 @@ export default async function LoginPage({
           <EmailSignInForm next={next} />
 
           <p className="text-xs text-ink-muted text-center">
-            By continuing, you agree to display your pet&apos;s photo publicly if approved.{" "}
+            By continuing, you agree to display your pet&apos;s photo publicly
+            if approved.{" "}
             <Link href="/rules" className="underline">
               Read the rules
             </Link>

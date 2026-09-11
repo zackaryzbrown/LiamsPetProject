@@ -58,7 +58,9 @@ export function buildEntryDonationUrl(
 ): string | null {
   return buildPledgeDonationUrl(
     submissionId,
-    perPetUrl ?? env.PLEDGE_DEFAULT_DONATION_URL,
+    perPetUrl ??
+      env.PLEDGE_DEFAULT_ENTRY_DONATION_URL ??
+      env.PLEDGE_DEFAULT_DONATION_URL,
     options,
   );
 }
@@ -73,7 +75,9 @@ export function buildVoteCheckoutUrl(
 ): string | null {
   return buildPledgeDonationUrl(
     submissionId,
-    perPetUrl ?? env.PLEDGE_DEFAULT_DONATION_URL,
+    perPetUrl ??
+      env.PLEDGE_DEFAULT_VOTE_DONATION_URL ??
+      env.PLEDGE_DEFAULT_DONATION_URL,
     options,
   );
 }
@@ -87,6 +91,14 @@ export function buildVoteDonationUrl(
   submissionId: string,
   perPetUrl: string | null,
 ): string | null {
-  if (!(perPetUrl ?? env.PLEDGE_DEFAULT_DONATION_URL)) return null;
+  if (
+    !(
+      perPetUrl ??
+      env.PLEDGE_DEFAULT_VOTE_DONATION_URL ??
+      env.PLEDGE_DEFAULT_DONATION_URL
+    )
+  ) {
+    return null;
+  }
   return `/donate/vote/${submissionId}`;
 }

@@ -39,14 +39,14 @@ export function SpendCreditsCard({
       <Card>
         <CardContent className="p-6 grid gap-3">
           <p className="font-display text-xl font-black tracking-tight">
-            Spend credits
+            Use saved votes
           </p>
           <p className="text-sm text-ink-muted">
             {!votingOpen
-              ? "Voting is currently closed. Your credits are safe in your wallet and will be available when voting reopens."
+              ? "Voting is currently closed. Your saved votes are safe and will be ready when voting reopens."
               : balanceCents <= 0
-              ? "You don't have any credits yet. Donate more than $10 when you enter a pet, and the overage will land here as spendable votes."
-              : "No approved pets yet — check back once submissions are reviewed."}
+                ? "You don't have saved votes yet. Donate more than $10 when you enter a pet, and the extra amount will be saved here."
+                : "No approved pets yet — check back once submissions are reviewed."}
           </p>
         </CardContent>
       </Card>
@@ -61,7 +61,9 @@ export function SpendCreditsCard({
       return;
     }
     if (n > maxVotes) {
-      setError(`You only have ${maxVotes} vote${maxVotes === 1 ? "" : "s"} available.`);
+      setError(
+        `You only have ${maxVotes} vote${maxVotes === 1 ? "" : "s"} available.`,
+      );
       return;
     }
     setError(null);
@@ -87,7 +89,7 @@ export function SpendCreditsCard({
       <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="grid gap-3">
           <p className="font-display text-xl font-black tracking-tight">
-            Spend credits
+            Use saved votes
           </p>
           <div className="grid gap-1.5">
             <Label htmlFor="petId">Pet</Label>

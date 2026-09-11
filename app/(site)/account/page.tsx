@@ -81,8 +81,9 @@ export default async function AccountPage() {
 
   const myPets = (pets ?? []).map((p) => {
     const imageUrl = p.public_image_path
-      ? admin.storage.from(env.SUPABASE_BUCKET_PUBLIC).getPublicUrl(p.public_image_path).data
-          .publicUrl
+      ? admin.storage
+          .from(env.SUPABASE_BUCKET_PUBLIC)
+          .getPublicUrl(p.public_image_path).data.publicUrl
       : null;
     return {
       ...p,
@@ -114,7 +115,7 @@ export default async function AccountPage() {
           <CardContent className="p-6 grid gap-3">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-royal-700">
               <Wallet className="h-4 w-4" />
-              Vote credit wallet
+              Saved votes
             </div>
             <p className="font-display text-4xl font-black tracking-tight">
               {formatCurrency(balanceCents)}
@@ -122,7 +123,7 @@ export default async function AccountPage() {
             <p className="text-sm text-ink-muted">
               {formatNumber(Math.floor(balanceCents / 100))} vote
               {Math.floor(balanceCents / 100) === 1 ? "" : "s"} ready to spend.
-              Credits come from entry donations over the $10 entry fee.
+              Saved votes come from entry donations over the $10 entry fee.
             </p>
           </CardContent>
         </Card>
@@ -137,7 +138,7 @@ export default async function AccountPage() {
         <Card className="mt-5">
           <CardContent className="p-6 grid gap-3">
             <p className="font-display text-xl font-black tracking-tight">
-              Wallet activity
+              Saved vote activity
             </p>
             <ul className="divide-y-2 divide-cream-200">
               {history.map((row) => {
@@ -152,7 +153,7 @@ export default async function AccountPage() {
                         {positive
                           ? row.reason === "entry_overage"
                             ? "Entry donation overage"
-                            : (row.reason ?? "Credit")
+                            : (row.reason ?? "Saved votes")
                           : `Voted for ${row.pet_name ?? "a pet"}`}
                       </p>
                       <p className="text-xs text-ink-muted">
@@ -191,7 +192,13 @@ export default async function AccountPage() {
               <CardContent className="p-5 md:p-6 grid gap-5 md:grid-cols-[120px_1fr_auto] items-center">
                 <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-2xl border-2 border-ink overflow-hidden bg-cream-200 shrink-0 mx-auto md:mx-0">
                   {p.imageUrl ? (
-                    <Image src={p.imageUrl} alt={p.pet_name} fill sizes="128px" className="object-cover" />
+                    <Image
+                      src={p.imageUrl}
+                      alt={p.pet_name}
+                      fill
+                      sizes="128px"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="h-full w-full grid place-items-center text-xs text-ink-muted text-center px-2">
                       Photo pending approval
@@ -200,36 +207,49 @@ export default async function AccountPage() {
                 </div>
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-display text-2xl font-black tracking-tight">{p.pet_name}</p>
+                    <p className="font-display text-2xl font-black tracking-tight">
+                      {p.pet_name}
+                    </p>
                     <Badge tone={status.tone}>{status.label}</Badge>
                   </div>
                   {p.status === "approved" && (
                     <p className="text-sm text-ink-muted">
                       <strong>{formatNumber(p.total_votes)}</strong> votes ·{" "}
-                      <strong>{formatCurrency(p.total_donated_cents)}</strong> raised
+                      <strong>{formatCurrency(p.total_donated_cents)}</strong>{" "}
+                      raised
                     </p>
                   )}
-                  {p.status === "pending_payment" && !p.entry_donation_confirmed && (
-                    <p className="text-sm text-ink-muted">
-                      Complete the $10 entry donation on Pledge.to to move this pet into review.
-                    </p>
-                  )}
+                  {p.status === "pending_payment" &&
+                    !p.entry_donation_confirmed && (
+                      <p className="text-sm text-ink-muted">
+                        Complete the $10 entry donation on Pledge.to to move
+                        this pet into review.
+                      </p>
+                    )}
                   {p.status === "rejected" && p.rejection_reason && (
-                    <p className="text-sm text-ember-700">Rejected: {p.rejection_reason}</p>
+                    <p className="text-sm text-ember-700">
+                      Rejected: {p.rejection_reason}
+                    </p>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 justify-end">
                   {p.voteUrl && (
                     <Button asChild variant="ember" size="sm">
-                      <a href={p.voteUrl} target="_blank" rel="noopener noreferrer">
-                        Share donation link <ArrowUpRight className="h-3.5 w-3.5" />
+                      <a
+                        href={p.voteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Share donation link{" "}
+                        <ArrowUpRight className="h-3.5 w-3.5" />
                       </a>
                     </Button>
                   )}
                   {p.status === "approved" && (
                     <Button asChild variant="ghost" size="sm">
                       <Link href="/vote">
-                        View on leaderboard <ExternalLink className="h-3.5 w-3.5" />
+                        View on leaderboard{" "}
+                        <ExternalLink className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
                   )}

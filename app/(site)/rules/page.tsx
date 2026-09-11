@@ -11,8 +11,9 @@ const RULES: { q: string; a: React.ReactNode }[] = [
       <>
         Every <strong>$1 you donate on Pledge.to = 1 vote</strong> for the pet
         you donated to. There&apos;s no separate ticketing system. Donate $5,
-        your pet gets 5 votes. Tips and processing fees that Pledge.to charges
-        do <em>not</em> count toward votes — only the donation amount does.
+        that pet gets 5 votes. Sign in before donating so we can securely attach
+        your vote. Tips and processing fees that Pledge.to charges do{" "}
+        <em>not</em> count toward votes — only the donation amount does.
       </>
     ),
   },
@@ -27,12 +28,24 @@ const RULES: { q: string; a: React.ReactNode }[] = [
     ),
   },
   {
+    q: "What if I donate more than $10 to enter?",
+    a: (
+      <>
+        Your first $10 enters one pet. Extra whole dollars become{" "}
+        <strong>saved votes</strong> in your account. For example: $12 enters
+        one pet and saves 2 votes; $20 enters one pet and saves 10 votes. You
+        can later use saved votes on any approved pet.
+      </>
+    ),
+  },
+  {
     q: "How do I pay?",
     a: (
       <>
         Pledge.to is the only donation platform. After you submit your pet,
-        you&apos;ll be redirected to Pledge.to to complete your $10 entry
-        donation. The same applies to votes — every vote happens on Pledge.to.
+        you&apos;ll be redirected to Pledge.to to complete a donation of at
+        least $10. For a vote, choose a pet first, then donate $1 or more on
+        Pledge.to.
       </>
     ),
   },

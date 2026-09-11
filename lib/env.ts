@@ -80,9 +80,12 @@ export const env = {
   //                               secret or signs with the API key.
   // PLEDGE_API_BASE_URL:          production REST base.
   // PLEDGE_SANDBOX_API_BASE_URL:  sandbox base used for dev/test.
-  // PLEDGE_DEFAULT_DONATION_URL:  fallback hosted-checkout URL for the
-  //                               $10 entry donation when a per-pet URL
-  //                               has not been configured yet.
+  // PLEDGE_DEFAULT_ENTRY_DONATION_URL: hosted checkout for pet entries;
+  //                               configure a $10 minimum in Pledge.
+  // PLEDGE_DEFAULT_VOTE_DONATION_URL: fallback checkout for direct votes;
+  //                               configure a $1 minimum in Pledge.
+  // PLEDGE_DEFAULT_DONATION_URL:  legacy shared fallback when the two
+  //                               purpose-specific URLs are not set.
   // PLEDGE_DEFAULT_WIDGET_ID /
   // PLEDGE_DEFAULT_CAMPAIGN_ID:   defaults when admin has not assigned
   //                               per-pet values.
@@ -111,6 +114,16 @@ export const env = {
   },
   get PLEDGE_DEFAULT_DONATION_URL() {
     return normalizePledgeDonationUrl(optional("PLEDGE_DEFAULT_DONATION_URL"));
+  },
+  get PLEDGE_DEFAULT_ENTRY_DONATION_URL() {
+    return normalizePledgeDonationUrl(
+      optional("PLEDGE_DEFAULT_ENTRY_DONATION_URL"),
+    );
+  },
+  get PLEDGE_DEFAULT_VOTE_DONATION_URL() {
+    return normalizePledgeDonationUrl(
+      optional("PLEDGE_DEFAULT_VOTE_DONATION_URL"),
+    );
   },
   get PLEDGE_DEFAULT_WIDGET_ID() {
     return optional("PLEDGE_DEFAULT_WIDGET_ID");

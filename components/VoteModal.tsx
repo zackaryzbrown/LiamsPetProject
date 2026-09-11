@@ -15,7 +15,13 @@ import { Label } from "@/components/ui/label";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { PublicPet } from "@/lib/public-data";
 import { spendVoteCreditsAction } from "@/app/(site)/account/actions";
-import { ArrowUpRight, Heart, Loader2, ShieldCheck, Wallet } from "lucide-react";
+import {
+  ArrowUpRight,
+  Heart,
+  Loader2,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 
 type Props = {
   pet: PublicPet;
@@ -74,7 +80,9 @@ export function VoteModal({
       setError(null);
     } else {
       setMode(canSpendCredits ? "credits" : "donate");
-      setCreditVotes(canSpendCredits ? String(Math.min(5, maxCreditVotes)) : "1");
+      setCreditVotes(
+        canSpendCredits ? String(Math.min(5, maxCreditVotes)) : "1",
+      );
     }
   }, [open, canSpendCredits, maxCreditVotes]);
 
@@ -139,8 +147,8 @@ export function VoteModal({
             <header>
               <DialogTitle>Vote for {pet.petName}</DialogTitle>
               <DialogDescription className="mt-1">
-                Every dollar counts as one vote. All donations go directly
-                to Soul Dog Rescue via Pledge.to.
+                Every dollar counts as one vote. All donations go directly to
+                Soul Dog Rescue via Pledge.to.
               </DialogDescription>
             </header>
 
@@ -177,7 +185,7 @@ export function VoteModal({
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <Wallet className="h-3.5 w-3.5" />
-                    Use credits
+                    Use saved votes
                   </span>
                 </button>
                 <button
@@ -193,7 +201,7 @@ export function VoteModal({
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <ArrowUpRight className="h-3.5 w-3.5" />
-                    Donate more
+                    Donate now
                   </span>
                 </button>
               </div>
@@ -203,14 +211,14 @@ export function VoteModal({
               <>
                 <div className="rounded-xl border-2 border-ink bg-cream-50 px-3 py-2 text-sm">
                   <p className="font-semibold">
-                    Wallet balance: {formatCurrency(creditBalanceCents)} ·{" "}
+                    Saved votes: {formatCurrency(creditBalanceCents)} ·{" "}
                     {formatNumber(maxCreditVotes)} vote
                     {maxCreditVotes === 1 ? "" : "s"} available
                   </p>
                   <p className="mt-1 text-xs text-ink-muted">
-                    Credits come from entry donations over $10. They go
-                    straight to this pet&apos;s vote total — no extra
-                    donation needed.
+                    Saved votes come from entry donations over $10. They go
+                    straight to this pet&apos;s vote total — no extra donation
+                    needed.
                   </p>
                 </div>
                 <div className="grid gap-2">
@@ -249,7 +257,7 @@ export function VoteModal({
                   ) : (
                     <Heart className="h-4 w-4" />
                   )}
-                  {pending ? "Casting votes…" : "Cast votes from wallet"}
+                  {pending ? "Casting votes…" : "Cast saved votes"}
                 </Button>
               </>
             ) : donationUrl ? (
@@ -258,24 +266,23 @@ export function VoteModal({
                   {userEmail ? (
                     <>
                       <p className="font-semibold">
-                        Secure vote checkout for {userEmail}
+                        Donate $1 or more to vote for {pet.petName}
                       </p>
                       <p className="mt-1 text-xs text-ink-muted">
-                        We&apos;ll open a signed vote link and ask Pledge.to
-                        to keep this donation attached to {pet.petName}.
-                        Use the same email at checkout for the strongest
-                        attribution path.
+                        Each whole dollar becomes one vote for this pet. This
+                        payment does not enter a pet or create saved votes. Use{" "}
+                        {userEmail} at checkout so we can reliably attach your
+                        vote.
                       </p>
                     </>
                   ) : (
                     <>
                       <p className="font-semibold">
-                        Sign-in required before checkout
+                        Sign in to donate $1 or more for {pet.petName}
                       </p>
                       <p className="mt-1 text-xs text-ink-muted">
-                        We&apos;ll send you through a secure vote-start page
-                        first so your donation can be tied back to this pet
-                        without relying on a typed email alone.
+                        Each whole dollar becomes one vote for this pet. This
+                        payment does not enter a pet or create saved votes.
                       </p>
                     </>
                   )}

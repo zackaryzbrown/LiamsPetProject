@@ -84,8 +84,10 @@ export default async function EnterPage() {
             </p>
             <p className="text-sm text-ink-muted">
               Your first $10 is the non-refundable entry donation. Any amount
-              above $10 becomes vote credit in your wallet, ready to use on an
-              approved pet.
+              above $10 becomes saved votes, ready to use on an approved pet.
+            </p>
+            <p className="border-l-4 border-ember-500 bg-ember-50 px-3 py-2 text-sm font-semibold text-ink">
+              To submit a pet, choose $10 or more at checkout.
             </p>
             <dl className="grid gap-1 border-t-2 border-cream-200 pt-3 text-sm">
               <div className="flex justify-between gap-4">
@@ -94,16 +96,16 @@ export default async function EnterPage() {
               </div>
               <div className="flex justify-between gap-4">
                 <dt>$12</dt>
-                <dd className="font-semibold">1 entry + 2 credits</dd>
+                <dd className="font-semibold">1 entry + 2 saved votes</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt>$20</dt>
-                <dd className="font-semibold">1 entry + 10 credits</dd>
+                <dd className="font-semibold">1 entry + 10 saved votes</dd>
               </div>
             </dl>
             <p className="text-xs text-ink-muted">
-              Credits are whole-dollar votes. Tips and payment fees do not
-              become credits.
+              Saved votes are whole-dollar votes. Tips and payment fees do not
+              become saved votes.
             </p>
           </CardContent>
         </Card>
