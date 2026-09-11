@@ -101,10 +101,26 @@ export async function confirmEntryDonation(
 
   const { data: row, error: fetchErr } = await admin
     .from("pet_submissions")
-    .select("id, status")
+    .select("id, status, entry_donation_confirmed")
     .eq("id", submissionId)
     .maybeSingle();
   if (fetchErr || !row) return { ok: false, error: "Submission not found." };
+
+  if (!row.entry_donation_confirmed) {
+    const { error: donationErr } = await admin.from("pledge_donations").insert({
+      pet_submission_id: row.id,
+      pledge_event_id: `manual-entry:${crypto.randomUUID()}`,
+      amount_cents: 1000,
+      tip_cents: 0,
+      fee_cents: 0,
+      currency: "USD",
+      vote_credits: 0,
+      donation_type: "entry",
+      raw_payload: { source: "admin_manual_entry_confirmation" },
+      processed_at: new Date().toISOString(),
+    });
+    if (donationErr) return { ok: false, error: donationErr.message };
+  }
 
   const updates: {
     entry_donation_confirmed: boolean;
