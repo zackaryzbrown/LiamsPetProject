@@ -35,13 +35,15 @@ export default async function EnterPage() {
           <span className="italic text-ember-500">Help a shelter dog.</span>
         </h1>
         <p className="mt-5 text-lg text-ink-muted max-w-xl">
-          Fill out the form below and you&apos;ll be redirected to{" "}
-          <strong>Pledge.to</strong> to complete the $10 entry donation. Every
-          dollar goes to Soul Dog Rescue.
+          Fill out the form below only if you want to submit a pet. You&apos;ll
+          be redirected to <strong>Pledge.to</strong> to complete the $10 entry
+          donation. The first $10 is the entry fee. Any extra whole dollars
+          become saved vote credits in your account.
         </p>
         <p className="mt-4 max-w-xl border-l-4 border-ember-500 bg-ember-50 px-4 py-3 text-sm font-semibold text-ink">
-          One form and one $10 or more donation enters one pet. To enter another
-          pet, complete a new form and donation.
+          If you only want vote credits, do not submit a pet. Go straight to the
+          Pledge page and donate the amount you want. $10 buys 10 credits/votes.
+          One form and one $10 or more donation enters one pet.
         </p>
 
         <div className="mt-10">
@@ -91,16 +93,18 @@ export default async function EnterPage() {
               above $10 becomes saved votes, ready to use on an approved pet.
             </p>
             <p className="border-l-4 border-ember-500 bg-ember-50 px-3 py-2 text-sm font-semibold text-ink">
-              To submit a pet, choose $10 or more at checkout.
+              To submit a pet, choose $10 or more at checkout. The first $10 is
+              the entry fee. If you only want vote credits, skip this form.
             </p>
             <p className="text-sm text-ink-muted">
               Entering more than one pet? Complete a separate form and $10 or
-              more donation for each pet.
+              more donation for each pet. Buying vote credits does not submit a
+              pet.
             </p>
             <dl className="grid gap-1 border-t-2 border-cream-200 pt-3 text-sm">
               <div className="flex justify-between gap-4">
                 <dt>$10</dt>
-                <dd className="font-semibold">1 entry</dd>
+                <dd className="font-semibold">1 entry OR 10 vote credits</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt>$12</dt>

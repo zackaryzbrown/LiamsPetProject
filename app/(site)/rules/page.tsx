@@ -23,7 +23,8 @@ const RULES: { q: string; a: React.ReactNode }[] = [
       <>
         $10. The entry donation is paid through Pledge.to and goes to Soul Dog
         Rescue. The entry donation is non-refundable and does <em>not</em> count
-        as a vote for your own pet.
+        as a vote for your own pet. If you only want vote credits, you do not
+        need to submit a pet. Go straight to the donation page instead.
       </>
     ),
   },
@@ -34,7 +35,9 @@ const RULES: { q: string; a: React.ReactNode }[] = [
         Your first $10 enters one pet. Extra whole dollars become{" "}
         <strong>saved votes</strong> in your account. For example: $12 enters
         one pet and saves 2 votes; $20 enters one pet and saves 10 votes. You
-        can later use saved votes on any approved pet.
+        can later use saved votes on any approved pet. If you are not entering a
+        pet, a direct donation is just a vote/credit purchase: $10 buys 10
+        credits/votes.
       </>
     ),
   },
@@ -52,10 +55,11 @@ const RULES: { q: string; a: React.ReactNode }[] = [
     q: "How do I pay?",
     a: (
       <>
-        Pledge.to is the only donation platform. After you submit your pet,
-        you&apos;ll be redirected to Pledge.to to complete a donation of at
-        least $10. For a vote, choose a pet first, then donate $1 or more on
-        Pledge.to.
+        Pledge.to is the only donation platform. If you want to submit a pet,
+        start on the pet entry form and you&apos;ll be redirected to Pledge.to
+        to pay the $10 entry fee. If you just want vote credits, skip the pet
+        form and go straight to the donation page. In that path, $10 buys 10
+        credits/votes for the pet or pets you want to support.
       </>
     ),
   },

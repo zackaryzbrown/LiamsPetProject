@@ -14,8 +14,10 @@ export const dynamic = "force-dynamic";
 const VOTE_ERRORS: Record<string, string> = {
   voting_closed: "Voting is currently closed.",
   pet_not_found: "That pet is no longer available for voting.",
-  vote_intent_failed: "We couldn't prepare a secure vote session. Please try again.",
-  donation_link_missing: "That pet doesn't have a donation link configured yet.",
+  vote_intent_failed:
+    "We couldn't prepare a secure vote session. Please try again.",
+  donation_link_missing:
+    "That pet doesn't have a donation link configured yet.",
 };
 
 export default async function VotePage({
@@ -25,7 +27,13 @@ export default async function VotePage({
 }) {
   const { error } = await searchParams;
   const supabase = await createClient();
-  const [contest, pets, { data: { user } }] = await Promise.all([
+  const [
+    contest,
+    pets,
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
     getPublicContest(),
     getApprovedPets(),
     supabase.auth.getUser(),
@@ -46,7 +54,10 @@ export default async function VotePage({
     c.votingOpen && new Date(c.votingDeadline).getTime() > Date.now();
   const pct =
     c.goalAmountCents > 0
-      ? Math.min(100, Math.round((c.raisedAmountCents / c.goalAmountCents) * 100))
+      ? Math.min(
+          100,
+          Math.round((c.raisedAmountCents / c.goalAmountCents) * 100),
+        )
       : 0;
 
   return (
@@ -55,12 +66,21 @@ export default async function VotePage({
         <header className="max-w-3xl">
           <p className="eyebrow text-royal-700">Vote with a donation</p>
           <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight">
-            Pick a pet. <span className="italic text-ember-500">Donate.</span> Vote.
+            Pick a pet. <span className="italic text-ember-500">Donate.</span>{" "}
+            Vote.
           </h1>
           <p className="mt-4 max-w-xl text-lg text-ink-muted">
-            Every dollar you donate to a pet on Pledge.to counts as one vote. 100% of donations
-            support <strong>Soul Dog Rescue</strong>.
+            Every dollar you donate to a pet on Pledge.to counts as one vote.
+            100% of donations support <strong>Soul Dog Rescue</strong>.
           </p>
+          <div className="mt-5 max-w-2xl rounded-2xl border-2 border-ink bg-cream-100 px-4 py-3 text-sm text-ink">
+            <p className="font-semibold">Quick choice:</p>
+            <p className="mt-1">
+              If you want to submit a pet, use the entry form. The first $10 is
+              your entry fee. If you only want vote credits, do not submit a
+              pet. This is a direct donation and $10 buys 10 credits/votes.
+            </p>
+          </div>
           <ContestStatusBadge
             contestOpen={votingIsOpen}
             votingDeadline={c.votingDeadline}

@@ -118,13 +118,18 @@ export function Hero({
           >
             <Button asChild variant="ember" size="lg">
               <Link href="/vote">
-                Donate now <ArrowRight className="h-4 w-4" />
+                Buy vote credits <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild variant="ghost" size="lg" className="bg-white/95">
-              <Link href="/enter">Enter your pet</Link>
+              <Link href="/enter">Submit your pet ($10 entry)</Link>
             </Button>
           </div>
+          <p className="mt-3 max-w-xl text-sm text-cream/80">
+            Single-link checkout: choose carefully. If you only want vote
+            credits, skip the pet form. If you want to enter a pet, the first
+            $10 is the entry fee.
+          </p>
 
           {/* Slim progress bar — social proof + urgency right under the CTAs.
               Cream-on-royal variant of the GoalProgress card. */}

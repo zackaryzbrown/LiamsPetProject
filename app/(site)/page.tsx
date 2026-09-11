@@ -49,7 +49,8 @@ export default async function HomePage() {
         <div className="text-center">
           <p className="eyebrow text-royal-700">How it works</p>
           <h2 className="mt-3 font-display text-4xl md:text-5xl font-black tracking-tight">
-            Three steps. <span className="italic text-ember-500">Real dogs.</span>
+            Three steps.{" "}
+            <span className="italic text-ember-500">Real dogs.</span>
           </h2>
         </div>
         <ol className="mt-10 grid gap-4 md:grid-cols-3">
@@ -57,7 +58,7 @@ export default async function HomePage() {
             {
               icon: Camera,
               title: "Enter your pet ($10)",
-              body: "Submit a photo and pay the $10 entry donation through Pledge.to. Your pet goes into the review queue.",
+              body: "If you want to submit a pet, use the entry form and pay the $10 entry fee through Pledge.to. If you only want vote credits, skip this and go straight to the donation page.",
             },
             {
               icon: Coins,
@@ -120,8 +121,8 @@ export default async function HomePage() {
                 Every donation goes to Soul Dog Rescue via Pledge.to.
               </p>
               <p className="mt-2 text-ink-muted">
-                Tips and processing fees on Pledge.to don&apos;t count toward votes — only your
-                donation amount does.
+                Tips and processing fees on Pledge.to don&apos;t count toward
+                votes — only your donation amount does.
               </p>
             </div>
             <Button asChild variant="ember" size="lg">

@@ -269,8 +269,10 @@ export function VoteModal({
                         Donate $1 or more to vote for {pet.petName}
                       </p>
                       <p className="mt-1 text-xs text-ink-muted">
-                        Each whole dollar becomes one vote for this pet. This
-                        payment does not enter a pet or create saved votes. Use{" "}
+                        This is a direct vote credit purchase. You do not need
+                        to submit a pet. Each whole dollar becomes one vote for
+                        this pet, and $10 buys 10 credits/votes. This payment
+                        does not enter a pet or create saved votes. Use{" "}
                         {userEmail} at checkout so we can reliably attach your
                         vote.
                       </p>
@@ -281,8 +283,10 @@ export function VoteModal({
                         Sign in to donate $1 or more for {pet.petName}
                       </p>
                       <p className="mt-1 text-xs text-ink-muted">
-                        Each whole dollar becomes one vote for this pet. This
-                        payment does not enter a pet or create saved votes.
+                        This is a direct vote credit purchase. You do not need
+                        to submit a pet. Each whole dollar becomes one vote for
+                        this pet, and $10 buys 10 credits/votes. This payment
+                        does not enter a pet or create saved votes.
                       </p>
                     </>
                   )}
