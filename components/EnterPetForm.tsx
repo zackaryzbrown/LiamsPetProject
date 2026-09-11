@@ -61,7 +61,13 @@ export function EnterPetForm({ action, accountEmail }: Props) {
       <div className="grid sm:grid-cols-2 gap-5">
         <div className="grid gap-2">
           <Label htmlFor="ownerName">Your name</Label>
-          <Input id="ownerName" name="ownerName" required maxLength={120} placeholder="Jane Doe" />
+          <Input
+            id="ownerName"
+            name="ownerName"
+            required
+            maxLength={120}
+            placeholder="Jane Doe"
+          />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="ownerEmail">Email</Label>
@@ -76,8 +82,8 @@ export function EnterPetForm({ action, accountEmail }: Props) {
             className="bg-cream-100 cursor-not-allowed"
           />
           <p className="text-xs text-ink-muted">
-            We use your account email so your entry donation credits
-            back to your wallet. Use this same email on Pledge.to.
+            We use your account email so your entry donation credits back to
+            your wallet. Use this same email on Pledge.to.
           </p>
         </div>
       </div>
@@ -85,11 +91,22 @@ export function EnterPetForm({ action, accountEmail }: Props) {
       <div className="grid sm:grid-cols-2 gap-5">
         <div className="grid gap-2">
           <Label htmlFor="ownerPhone">Phone (optional)</Label>
-          <Input id="ownerPhone" name="ownerPhone" maxLength={20} placeholder="555-555-1234" />
+          <Input
+            id="ownerPhone"
+            name="ownerPhone"
+            maxLength={20}
+            placeholder="555-555-1234"
+          />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="petName">Pet&apos;s name</Label>
-          <Input id="petName" name="petName" required maxLength={80} placeholder="Biscuit" />
+          <Input
+            id="petName"
+            name="petName"
+            required
+            maxLength={80}
+            placeholder="Biscuit"
+          />
         </div>
       </div>
 
@@ -124,7 +141,8 @@ export function EnterPetForm({ action, accountEmail }: Props) {
             className="mt-1 h-5 w-5 rounded border-2 border-ink"
           />
           <span>
-            I consent to my pet&apos;s photo and name being displayed publicly on the voting page.
+            I consent to my pet&apos;s photo and name being displayed publicly
+            on the voting page.
           </span>
         </label>
         <label className="flex items-start gap-3 text-sm">
@@ -161,11 +179,19 @@ export function EnterPetForm({ action, accountEmail }: Props) {
           )}
         </Button>
         <p className="text-sm text-ink-muted">
-          You&apos;ll be sent to Pledge.to to complete your entry donation.
+          At checkout: $10 enters your pet; every whole dollar above $10 becomes
+          a vote credit.
         </p>
       </div>
 
-      <Textarea name="note" hidden readOnly aria-hidden tabIndex={-1} value="" />
+      <Textarea
+        name="note"
+        hidden
+        readOnly
+        aria-hidden
+        tabIndex={-1}
+        value=""
+      />
     </form>
   );
 }

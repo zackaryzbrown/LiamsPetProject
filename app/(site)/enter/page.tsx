@@ -31,19 +31,23 @@ export default async function EnterPage() {
       <div>
         <p className="eyebrow text-royal-700">Enter your pet</p>
         <h1 className="mt-3 font-display text-5xl md:text-6xl font-black tracking-tight">
-          Submit your pet. <span className="italic text-ember-500">Help a shelter dog.</span>
+          Submit your pet.{" "}
+          <span className="italic text-ember-500">Help a shelter dog.</span>
         </h1>
         <p className="mt-5 text-lg text-ink-muted max-w-xl">
           Fill out the form below and you&apos;ll be redirected to{" "}
-          <strong>Pledge.to</strong> to complete the $10 entry donation. Every dollar goes to Soul
-          Dog Rescue.
+          <strong>Pledge.to</strong> to complete the $10 entry donation. Every
+          dollar goes to Soul Dog Rescue.
         </p>
 
         <div className="mt-10">
           <Card>
             <CardContent>
               {submissionsOpen ? (
-                <EnterPetForm action={enterPet} accountEmail={user.email ?? ""} />
+                <EnterPetForm
+                  action={enterPet}
+                  accountEmail={user.email ?? ""}
+                />
               ) : (
                 <div className="grid gap-4 text-center py-8">
                   <p className="font-display text-2xl font-black">
@@ -52,8 +56,8 @@ export default async function EnterPage() {
                       : "Contest settings are temporarily unavailable."}
                   </p>
                   <p className="text-ink-muted">
-                    You can still vote for entered pets — every dollar still goes to Soul Dog
-                    Rescue.
+                    You can still vote for entered pets — every dollar still
+                    goes to Soul Dog Rescue.
                   </p>
                   <div className="flex justify-center">
                     <Button asChild variant="ember" size="lg">
@@ -72,12 +76,34 @@ export default async function EnterPage() {
       <aside className="grid gap-4 self-start">
         <Card>
           <CardContent className="p-6 grid gap-3">
-            <p className="eyebrow text-royal-700">What you&apos;re paying for</p>
+            <p className="eyebrow text-royal-700">
+              What you&apos;re paying for
+            </p>
             <p className="font-display text-2xl font-black tracking-tight">
-              $10 entry · 100% to Soul Dog Rescue
+              $10 enters one pet
             </p>
             <p className="text-sm text-ink-muted">
-              The $10 entry donation is processed by Pledge.to and is non-refundable.
+              Your first $10 is the non-refundable entry donation. Any amount
+              above $10 becomes vote credit in your wallet, ready to use on an
+              approved pet.
+            </p>
+            <dl className="grid gap-1 border-t-2 border-cream-200 pt-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt>$10</dt>
+                <dd className="font-semibold">1 entry</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt>$12</dt>
+                <dd className="font-semibold">1 entry + 2 credits</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt>$20</dt>
+                <dd className="font-semibold">1 entry + 10 credits</dd>
+              </div>
+            </dl>
+            <p className="text-xs text-ink-muted">
+              Credits are whole-dollar votes. Tips and payment fees do not
+              become credits.
             </p>
           </CardContent>
         </Card>
@@ -88,8 +114,8 @@ export default async function EnterPage() {
               Your pet appears after approval
             </p>
             <p className="text-sm text-ink-muted">
-              Once Pledge.to confirms your entry donation and an admin approves the photo, your
-              pet shows up on the public voting page.
+              Once Pledge.to confirms your entry donation and an admin approves
+              the photo, your pet shows up on the public voting page.
             </p>
           </CardContent>
         </Card>

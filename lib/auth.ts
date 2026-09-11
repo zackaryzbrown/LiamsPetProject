@@ -1,6 +1,8 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { env } from "@/lib/env";
 
 export type AdminContext = {
   userId: string;
@@ -16,6 +18,21 @@ export async function requireAdmin(): Promise<AdminContext> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/admin");
+
+  const email = user.email?.toLowerCase();
+  if (
+    email &&
+    env.ADMIN_EMAILS.includes(email) &&
+    env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    try {
+      await createAdminClient().rpc("promote_admin_by_email", {
+        p_email: email,
+      });
+    } catch {
+      // The role check below remains the authorization source of truth.
+    }
+  }
 
   const { data: profile, error } = await supabase
     .from("profiles")
