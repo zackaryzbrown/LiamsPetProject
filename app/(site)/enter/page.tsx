@@ -39,6 +39,10 @@ export default async function EnterPage() {
           <strong>Pledge.to</strong> to complete the $10 entry donation. Every
           dollar goes to Soul Dog Rescue.
         </p>
+        <p className="mt-4 max-w-xl border-l-4 border-ember-500 bg-ember-50 px-4 py-3 text-sm font-semibold text-ink">
+          One form and one $10 or more donation enters one pet. To enter another
+          pet, complete a new form and donation.
+        </p>
 
         <div className="mt-10">
           <Card>
