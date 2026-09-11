@@ -10,6 +10,21 @@ export type ActionResult =
   | { ok: true; message?: string }
   | { ok: false; error: string };
 
+export async function deleteContactMessage(messageId: string): Promise<void> {
+  await requireAdmin();
+  const parsed = z.string().uuid().safeParse(messageId);
+  if (!parsed.success) throw new Error("Invalid message.");
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("contact_messages")
+    .delete()
+    .eq("id", parsed.data);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/messages");
+}
+
 function pathExt(path: string): string {
   const m = path.match(/\.([a-z0-9]+)$/i);
   return m ? m[1].toLowerCase() : "jpg";

@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/badge";
+import { deleteContactMessage } from "@/app/admin/actions";
+import { Trash2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +9,9 @@ export default async function AdminMessagesPage() {
   const admin = createAdminClient();
   const { data: messages, error } = await admin
     .from("contact_messages")
-    .select("id, name, email, subject, message, user_agent, ip, created_at, read_at")
+    .select(
+      "id, name, email, subject, message, user_agent, ip, created_at, read_at",
+    )
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -21,8 +25,8 @@ export default async function AdminMessagesPage() {
             <>
               {" "}
               — the <code>contact_messages</code> table doesn&apos;t exist yet.
-              Apply the migration <code>20260615000000_contact_messages.sql</code>
-              {" "}in Supabase.
+              Apply the migration{" "}
+              <code>20260615000000_contact_messages.sql</code> in Supabase.
             </>
           )}
         </p>
@@ -112,6 +116,17 @@ export default async function AdminMessagesPage() {
                   </p>
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm">{m.message}</p>
+                <div className="mt-4 flex justify-end border-t-2 border-cream-200 pt-3">
+                  <form action={deleteContactMessage.bind(null, m.id)}>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1.5 rounded-lg border-2 border-ember-500 px-3 py-1.5 text-sm font-semibold text-ember-700 transition hover:bg-ember-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </button>
+                  </form>
+                </div>
                 {(m.user_agent || m.ip) && (
                   <details className="mt-3 text-xs text-ink-muted">
                     <summary className="cursor-pointer select-none">
