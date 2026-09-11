@@ -89,6 +89,10 @@ export default async function EnterPage() {
             <p className="border-l-4 border-ember-500 bg-ember-50 px-3 py-2 text-sm font-semibold text-ink">
               To submit a pet, choose $10 or more at checkout.
             </p>
+            <p className="text-sm text-ink-muted">
+              Entering more than one pet? Complete a separate form and $10 or
+              more donation for each pet.
+            </p>
             <dl className="grid gap-1 border-t-2 border-cream-200 pt-3 text-sm">
               <div className="flex justify-between gap-4">
                 <dt>$10</dt>

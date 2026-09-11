@@ -181,7 +181,8 @@ export function EnterPetForm({ action, accountEmail }: Props) {
         </Button>
         <p className="text-sm text-ink-muted">
           Choose $10 or more at checkout. $10 submits your pet; extra whole
-          dollars become vote votes you can save for later.
+          dollars become saved votes you can use later. Submit each additional
+          pet separately.
         </p>
       </div>
 

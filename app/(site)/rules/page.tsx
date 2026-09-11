@@ -39,6 +39,16 @@ const RULES: { q: string; a: React.ReactNode }[] = [
     ),
   },
   {
+    q: "Can I enter more than one pet?",
+    a: (
+      <>
+        Yes. Complete a separate entry form and make a separate donation of at
+        least $10 for each pet. A $20 donation on one form enters one pet and
+        saves 10 votes; it does not enter a second pet.
+      </>
+    ),
+  },
+  {
     q: "How do I pay?",
     a: (
       <>
